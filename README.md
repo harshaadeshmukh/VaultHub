@@ -117,12 +117,50 @@ You get back perfect "movie.mp4" ✅
 | Action | Description |
 |--------|-------------|
 | 📤 **UPLOAD** | pdf, image, video, audio, docs — any file |
+| 👁️ **OPEN / VIEW** | open and view file directly inside the vault |
 | 📥 **DOWNLOAD** | fetch + decrypt + reassemble instantly |
 | 🗑️ **DELETE** | removes ALL chunks from ALL nodes + blockchain record marked DELETED |
 | 🔗 **SHARE** | enter receiver's VAULT email only — encrypted with THEIR public key |
 | 📋 **MY FILES** | list all files, size, date, who has access |
 | 🔔 **ACTIVITY** | real-time "xyz@vault accessed your file" |
 | 🚫 **REVOKE** | cancel any share instantly, anytime |
+
+---
+
+## 👁️ Open / View Feature — Inside Vault
+
+```
+YOU click "Open" on "report.pdf"
+          ↓
+System fetches all chunks from nodes
+          ↓
+Decrypts chunks in memory
+(never written to disk unencrypted!)
+          ↓
+Streams content directly to vault viewer
+          ↓
+┌─────────────────────────────┐
+│   🔒 DecentraVault Viewer   │
+│                             │
+│   [  report.pdf content  ]  │
+│                             │
+│   Page 1 of 10    🔐 secure │
+└─────────────────────────────┘
+          ↓
+File NEVER leaves the vault
+No temporary files on server
+No browser cache exposure
+```
+
+### What Opens Where
+
+| File Type | Opens In |
+|-----------|----------|
+| 📄 PDF | In-vault PDF viewer |
+| 🖼️ Image (jpg / png / gif) | In-vault image viewer |
+| 🎬 Video (mp4 / mkv) | In-vault streaming player |
+| 🎵 Audio (mp3 / wav) | In-vault audio player |
+| 📝 Docs (txt / md) | In-vault text viewer |
 
 ---
 
@@ -149,11 +187,11 @@ They login to vault →
 notification appears:
 "Rahul shared report.pdf"
         ↓
-They download inside vault
+They open or download inside vault
 using their decrypted token
         ↓
 YOU get real-time alert via WebSocket:
-"🔔 friend@vault.com downloaded report.pdf — just now"
+"🔔 friend@vault.com opened report.pdf — just now"
         ↓
 Blockchain logs this access permanently:
 "friend@vault.com accessed report.pdf at 10:32 AM"
@@ -190,7 +228,8 @@ Blockchain logs this access permanently:
  │ Login   │  │Download │  │ chunks  │
  │ KeyGen  │  │ Delete  │  │ Health  │
  │   JWT   │  │  Share  │  │  check  │
- │   DID   │  │  List   │  │  Sync   │
+ │   DID   │  │  Open   │  │  Sync   │
+ │         │  │  List   │  │         │
  └─────────┘  └────┬────┘  └─────────┘
                    │
       ┌────────────┼─────────────┐
@@ -203,6 +242,7 @@ Blockchain logs this access permanently:
  │ Encrypt │  │  Verify  │ │WebSocket│
  │ Decrypt │  │Ownership │ │Activity │
  │Reassmbly│  │Audit log │ │  feed   │
+ │ Stream  │  │          │ │         │
  └─────────┘  └──────────┘ └─────────┘
                    │
       ┌────────────┼─────────────┐
@@ -215,6 +255,67 @@ Blockchain logs this access permanently:
  │ stored│    │ stored│    │ stored│
  └───────┘    └───────┘    └───────┘
 ```
+
+---
+
+## 🎨 Frontend — Thymeleaf + Bootstrap 5
+
+### Why Thymeleaf?
+
+```
+React / Angular          Thymeleaf
+───────────────          ─────────────────
+Separate project    vs   Lives INSIDE Spring Boot
+Need Node.js        vs   No extra setup needed
+JavaScript heavy    vs   Mostly HTML + little JS
+2 projects to run   vs   1 project runs everything
+Complex setup       vs   Just add dependency — done!
+```
+
+> You focus **90% on Java backend** — Thymeleaf handles the UI with simple HTML! 🎯
+
+### UI Layout
+
+```
+┌─────────────────────────────────────────────┐
+│  🔐 DecentraVault        [👤 Rahul] [Logout] │
+├─────────────────────────────────────────────┤
+│  📤 Upload File                             │
+├─────────────────────────────────────────────┤
+│  MY FILES                                   │
+│  ┌──────────────────────────────────────┐   │
+│  │ 📄 report.pdf   2MB   👁️ 🔗 📥 🗑️    │   │
+│  │ 🖼️ photo.jpg    1MB   👁️ 🔗 📥 🗑️    │   │
+│  │ 🎬 movie.mp4  500MB   👁️ 🔗 📥 🗑️    │   │
+│  │ 🎵 song.mp3    5MB    👁️ 🔗 📥 🗑️    │   │
+│  └──────────────────────────────────────┘   │
+├─────────────────────────────────────────────┤
+│  🔔 ACTIVITY FEED (WebSocket live)          │
+│  • friend@vault.com opened report.pdf       │
+│  • You uploaded movie.mp4 — 2 mins ago      │
+└─────────────────────────────────────────────┘
+```
+
+### Pages / Templates
+
+| Page | Template File | Purpose |
+|------|--------------|---------|
+| Login | `login.html` | Vault login with DID |
+| Register | `register.html` | Create vault account + key generation |
+| Dashboard | `dashboard.html` | Overview + activity feed |
+| My Files | `files.html` | List, upload, delete, share |
+| Viewer | `viewer.html` | Open PDF / image / video / audio in vault |
+| Share | `share.html` | Share file with vault user |
+| Activity | `activity.html` | Full access history |
+
+### Frontend Stack
+
+| Layer | Technology |
+|-------|-----------|
+| Templates | Thymeleaf (built into Spring Boot) |
+| Styling | Bootstrap 5 (copy-paste beautiful UI) |
+| Live Updates | WebSocket + vanilla JavaScript |
+| File Viewer | Browser-native viewers inside Thymeleaf |
 
 ---
 
@@ -251,25 +352,59 @@ Blockchain logs this access permanently:
 ├──────────────────────────────────────────────┤
 │              activity_logs                   │
 │  id, fileId, actorDID, actionType,           │
-│  (UPLOAD/DOWNLOAD/SHARE/REVOKE/DELETE)       │
+│  (UPLOAD/DOWNLOAD/OPEN/SHARE/REVOKE/DELETE)  │
 │  timestamp, ipAddress                        │
 └──────────────────────────────────────────────┘
 ```
 
 ---
 
-## 📚 Tech Stack
+## 🗂️ Project Structure
+
+```
+decentravault/
+├── src/
+│   ├── main/
+│   │   ├── java/com.decentravault/
+│   │   │   ├── gateway/           ← API Gateway
+│   │   │   ├── auth/              ← Auth service
+│   │   │   ├── file/              ← File service
+│   │   │   ├── chunk/             ← Chunk engine
+│   │   │   ├── node/              ← Node service
+│   │   │   ├── blockchain/        ← Blockchain (pure Java)
+│   │   │   ├── notify/            ← WebSocket + Email
+│   │   │   └── shared/            ← Common utilities
+│   │   └── resources/
+│   │       ├── templates/         ← Thymeleaf HTML pages
+│   │       │   ├── login.html
+│   │       │   ├── register.html
+│   │       │   ├── dashboard.html
+│   │       │   ├── files.html
+│   │       │   ├── viewer.html
+│   │       │   ├── share.html
+│   │       │   └── activity.html
+│   │       ├── static/
+│   │       │   ├── css/           ← Bootstrap 5 + custom
+│   │       │   └── js/            ← WebSocket JS
+│   │       └── application.yml
+├── docker-compose.yml
+├── Dockerfile
+└── README.md
+```
+
+---
+
+## 📚 Full Tech Stack
 
 | Layer | Technology |
 |-------|-----------|
 | Framework | Spring Boot 3.x |
 | Language | Java 17+ |
+| Frontend | Thymeleaf + Bootstrap 5 |
 | Database | MySQL + Spring Data JPA |
 | Security | Spring Security + JWT + RSA |
 | Real-time | WebSocket (Spring) |
 | Reactive | Spring WebFlux + R2DBC |
-| Messaging | Apache Kafka |
-| AI | Spring AI |
 | Email | Spring Mail (JavaMail) |
 | DevOps | Docker + Kubernetes |
 | Gateway | Spring Cloud Gateway |
@@ -285,6 +420,7 @@ Blockchain logs this access permanently:
 ✅ MySQL + Spring Data JPA
 ✅ File chunking engine in pure Java
 ✅ SHA-256 hashing per chunk
+✅ Thymeleaf basic templates
 ```
 
 ### Phase 2 — Encryption
@@ -327,23 +463,32 @@ Blockchain logs this access permanently:
 ✅ Spring Mail integration
 ```
 
-### Phase 7 — Real-time
+### Phase 7 — Open / View
+```
+✅ Stream file chunks in memory
+✅ In-vault PDF viewer (Thymeleaf)
+✅ In-vault video / audio player
+✅ In-vault image viewer
+✅ Zero disk exposure during view
+```
+
+### Phase 8 — Real-time
 ```
 ✅ WebSocket with Spring Boot
 ✅ Live upload progress bar
 ✅ Real-time activity feed
-✅ "File accessed" instant alerts
+✅ "File accessed / opened" instant alerts
 ```
 
-### Phase 8 — Reactive
+### Phase 9 — Reactive
 ```
 ✅ Spring WebFlux (reactive programming)
-✅ Stream large video files
+✅ Stream large video files reactively
 ✅ Non-blocking chunk distribution
 ✅ Mono & Flux concepts
 ```
 
-### Phase 9 — DevOps
+### Phase 10 — DevOps
 ```
 ✅ Docker + Kubernetes
 ✅ Each node = Docker container
@@ -363,9 +508,10 @@ Blockchain logs this access permanently:
 | Week 4 | Pure Java blockchain ownership |
 | Week 5 | Spring Security + JWT + DID auth |
 | Week 6 | Vault-only share + email + revoke |
-| Week 7 | WebSocket real-time alerts |
-| Week 8 | Spring WebFlux reactive streaming |
-| Week 9 | Docker + Kubernetes deployment |
+| Week 7 | Open / view inside vault |
+| Week 8 | WebSocket real-time alerts |
+| Week 9 | Spring WebFlux reactive streaming |
+| Week 10 | Docker + Kubernetes deployment |
 
 ---
 
@@ -375,10 +521,11 @@ Blockchain logs this access permanently:
 ✅ Nobody builds this from scratch — only you
 ✅ Combines cryptography + blockchain + distributed systems
 ✅ Closed vault ecosystem — no random link sharing
+✅ Open files securely inside vault — zero exposure
 ✅ Every share cryptographically tied to receiver identity
 ✅ Real alternative to Google Drive / Dropbox
 ✅ You understand HOW IPFS works by building it yourself
-✅ Resume/portfolio → no interviewer has seen this before
+✅ Resume / portfolio → no interviewer has seen this before
 ✅ Every concept learnt = industry-level backend skill
 ✅ Can be turned into a real product / startup 🚀
 ```
@@ -394,9 +541,11 @@ Blockchain logs this access permanently:
 | Encryption | Partial | Basic | **AES + RSA per chunk** |
 | Blockchain | ❌ | ❌ | **Pure Java blockchain** |
 | Share control | Link-based | Link-based | **Vault users only** |
+| Open in browser | ✅ | ❌ | **✅ In-vault secure viewer** |
 | Real-time alerts | ❌ | ❌ | **WebSocket** |
 | Reactive streaming | ❌ | ❌ | **Spring WebFlux** |
 | Identity (DID) | ❌ | ❌ | **Cryptographic DID** |
+| Frontend | Web app | None | **Thymeleaf + Bootstrap 5** |
 
 ---
 
