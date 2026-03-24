@@ -1,0 +1,425 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8"/>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+    <title>User Detail — VaultHub Admin</title>
+    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&family=Syne:wght@700;800&family=Inter:wght@400;500;600&display=swap" rel="stylesheet"/>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet"/>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css" rel="stylesheet"/>
+    <style>
+        :root{--bg:#05050a;--bg2:#080810;--bg3:#0d0d18;--bg4:#111120;
+              --border:rgba(248,113,113,.1);--border2:rgba(248,113,113,.18);
+              --red:#f87171;--red2:#fca5a5;--red3:rgba(248,113,113,.08);
+              --green:#34d399;--yellow:#fbbf24;--cyan:#22d3ee;--blue:#6366f1;
+              --text:#e0e0f0;--muted:#4a4a6a;--muted2:#333350;
+              --mono:'JetBrains Mono',monospace;--inter:'Inter',sans-serif;}
+        *{margin:0;padding:0;box-sizing:border-box;}
+        body{font-family:var(--inter);background:var(--bg);color:var(--text);min-height:100vh;overflow-x:hidden;}
+        body::before{content:'';position:fixed;inset:0;background:repeating-linear-gradient(0deg,transparent,transparent 3px,rgba(0,0,0,.08) 3px,rgba(0,0,0,.08) 4px);pointer-events:none;z-index:0;}
+        body::after{content:'';position:fixed;top:0;left:0;right:0;bottom:0;background:radial-gradient(ellipse 800px 600px at 50% 20%,rgba(248,113,113,.04) 0%,transparent 70%);pointer-events:none;z-index:0;}
+
+        /* TOPBAR */
+        .topbar{position:sticky;top:0;z-index:100;background:rgba(5,5,10,.97);backdrop-filter:blur(20px);border-bottom:1px solid var(--border);padding:0 1.5rem;height:54px;display:flex;align-items:center;justify-content:space-between;}
+        .brand{display:flex;align-items:center;gap:.65rem;text-decoration:none;}
+        .brand-icon{width:28px;height:28px;background:rgba(248,113,113,.12);border:1px solid rgba(248,113,113,.25);border-radius:6px;display:flex;align-items:center;justify-content:center;font-size:.75rem;color:var(--red);}
+        .brand-text{font-family:var(--mono);font-size:.85rem;font-weight:700;color:#fff;letter-spacing:1px;}
+        .brand-text span{color:var(--red);}
+        .admin-tag{font-family:var(--mono);font-size:.58rem;background:rgba(248,113,113,.1);border:1px solid rgba(248,113,113,.25);color:var(--red);padding:.08rem .45rem;border-radius:3px;letter-spacing:2px;text-transform:uppercase;}
+        .topbar-right{display:flex;align-items:center;gap:.7rem;}
+        .sys-status{display:flex;align-items:center;gap:.35rem;font-family:var(--mono);font-size:.62rem;color:var(--muted);}
+        .sys-dot{width:6px;height:6px;border-radius:50%;background:var(--green);box-shadow:0 0 6px var(--green);animation:pulse 2s infinite;}
+        @keyframes pulse{0%,100%{opacity:1}50%{opacity:.3}}
+        .admin-chip{display:flex;align-items:center;gap:.45rem;background:var(--bg3);border:1px solid var(--border);border-radius:3px;padding:.25rem .75rem;}
+        .admin-av{width:22px;height:22px;background:linear-gradient(135deg,var(--red),#dc2626);border-radius:3px;display:flex;align-items:center;justify-content:center;font-size:.62rem;font-weight:700;color:#fff;flex-shrink:0;overflow:hidden;padding:0;}
+        .admin-name{font-family:var(--mono);font-size:.72rem;color:var(--text);}
+        .logout-btn{font-family:var(--mono);font-size:.68rem;background:transparent;border:1px solid var(--border);color:var(--muted);padding:.25rem .65rem;border-radius:3px;text-decoration:none;display:flex;align-items:center;gap:.3rem;transition:all .2s;}
+        .logout-btn:hover{border-color:var(--red);color:var(--red);}
+
+        /* LAYOUT */
+        .layout{display:flex;min-height:calc(100vh - 54px);position:relative;z-index:1;}
+
+        /* SIDEBAR */
+        .sidebar{width:220px;flex-shrink:0;background:var(--bg2);border-right:1px solid var(--border);padding:1.2rem .8rem;display:flex;flex-direction:column;}
+        .sb-section{margin-bottom:1.5rem;}
+        .sb-label{font-family:var(--mono);font-size:.55rem;color:rgba(248,113,113,.35);letter-spacing:3px;text-transform:uppercase;padding:.4rem .6rem;margin-bottom:.2rem;}
+        .sb-item{display:flex;align-items:center;gap:.6rem;padding:.5rem .65rem;border-radius:3px;text-decoration:none;color:var(--muted);font-family:var(--mono);font-size:.75rem;transition:all .15s;margin-bottom:1px;}
+        .sb-item:hover{background:rgba(248,113,113,.06);color:var(--text);}
+        .sb-item i{font-size:.8rem;width:14px;text-align:center;flex-shrink:0;}
+        .sb-footer{margin-top:auto;padding-top:1rem;border-top:1px solid var(--border);}
+        .sb-footer-text{font-family:var(--mono);font-size:.58rem;color:var(--muted2);text-align:center;line-height:1.8;}
+
+        /* MAIN */
+        .main{flex:1;padding:1.5rem;overflow-y:auto;}
+
+        /* BREADCRUMB */
+        .breadcrumb-bar{display:flex;align-items:center;gap:.4rem;font-family:var(--mono);font-size:.68rem;color:var(--muted);margin-bottom:1.4rem;}
+        .breadcrumb-bar a{color:var(--muted);text-decoration:none;transition:color .15s;}
+        .breadcrumb-bar a:hover{color:var(--red);}
+        .breadcrumb-bar .sep{color:rgba(248,113,113,.3);}
+        .breadcrumb-bar .cur{color:var(--text);}
+
+        /* PROFILE CARD */
+        .profile-grid{display:grid;grid-template-columns:1fr 1fr 1fr;gap:.85rem;margin-bottom:1.4rem;}
+        .profile-main{grid-column:1/2;background:var(--bg2);border:1px solid var(--border);border-radius:3px;padding:1.4rem;position:relative;overflow:hidden;}
+        .profile-main::before{content:'';position:absolute;top:0;left:0;right:0;height:1px;background:linear-gradient(90deg,transparent,var(--red),transparent);}
+        .profile-avatar{width:64px;height:64px;border-radius:3px;display:flex;align-items:center;justify-content:center;font-size:1.5rem;font-weight:700;color:#fff;font-family:var(--mono);margin-bottom:1rem;border:1px solid rgba(248,113,113,.2);overflow:hidden;padding:0;}
+        .profile-name{font-family:var(--mono);font-size:1rem;font-weight:700;color:#fff;margin-bottom:.2rem;}
+        .profile-email{font-family:var(--mono);font-size:.72rem;color:rgba(248,113,113,.6);margin-bottom:.8rem;}
+        .profile-badge-row{display:flex;align-items:center;gap:.4rem;flex-wrap:wrap;}
+        .rbadge{font-family:var(--mono);font-size:.58rem;font-weight:700;padding:.12rem .5rem;border-radius:2px;text-transform:uppercase;letter-spacing:.5px;display:inline-block;}
+        .rb-admin{background:rgba(248,113,113,.1);color:var(--red);border:1px solid rgba(248,113,113,.2);}
+        .rb-user{background:rgba(99,102,241,.08);color:#818cf8;border:1px solid rgba(99,102,241,.18);}
+        .self-tag{font-family:var(--mono);font-size:.52rem;background:rgba(251,191,36,.08);border:1px solid rgba(251,191,36,.2);color:var(--yellow);padding:.02rem .3rem;border-radius:2px;}
+
+        /* INFO CARDS */
+        .info-card{background:var(--bg2);border:1px solid var(--border);border-radius:3px;padding:1.1rem 1.2rem;position:relative;overflow:hidden;}
+        .info-card::before{content:'';position:absolute;top:0;left:0;right:0;height:1px;}
+        .ic-cyan::before{background:linear-gradient(90deg,transparent,var(--cyan),transparent);}
+        .ic-green::before{background:linear-gradient(90deg,transparent,var(--green),transparent);}
+        .ic-num{font-family:var(--mono);font-size:1.6rem;font-weight:700;color:#fff;line-height:1;margin-bottom:.2rem;}
+        .ic-label{font-family:var(--mono);font-size:.58rem;color:var(--muted);text-transform:uppercase;letter-spacing:2px;}
+        .ic-sub{font-family:var(--mono);font-size:.65rem;color:var(--muted);margin-top:.5rem;}
+        .ic-icon{position:absolute;right:1rem;top:50%;transform:translateY(-50%);font-size:1.5rem;opacity:.07;}
+
+        /* META TABLE */
+        .meta-section{background:var(--bg2);border:1px solid var(--border);border-radius:3px;padding:1.1rem 1.2rem;margin-bottom:1.4rem;}
+        .meta-title{font-family:var(--mono);font-size:.68rem;font-weight:700;color:var(--red);text-transform:uppercase;letter-spacing:2px;margin-bottom:.85rem;display:flex;align-items:center;gap:.4rem;}
+        .meta-row{display:flex;align-items:flex-start;padding:.5rem 0;border-bottom:1px solid rgba(248,113,113,.05);}
+        .meta-row:last-child{border-bottom:none;}
+        .meta-key{font-family:var(--mono);font-size:.65rem;color:var(--muted);width:130px;flex-shrink:0;padding-top:.05rem;}
+        .meta-val{font-family:var(--mono);font-size:.75rem;color:var(--text);word-break:break-all;}
+        .meta-val.highlight{color:var(--cyan);}
+        .meta-val.red{color:var(--red);}
+
+        /* FILES TABLE */
+        .section-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:.85rem;}
+        .section-title{font-family:var(--mono);font-size:.78rem;font-weight:700;color:var(--text);display:flex;align-items:center;gap:.45rem;}
+        .section-count{font-family:var(--mono);font-size:.65rem;color:var(--muted);}
+        .search-row{display:flex;align-items:center;gap:.7rem;margin-bottom:.9rem;}
+        .search-box{display:flex;align-items:center;gap:.45rem;background:var(--bg3);border:1px solid var(--border);border-radius:3px;padding:.45rem .8rem;max-width:340px;}
+        .search-box i{color:var(--muted);font-size:.78rem;}
+        .search-box input{background:transparent;border:none;outline:none;color:var(--text);font-family:var(--mono);font-size:.78rem;width:100%;}
+        .search-box input::placeholder{color:var(--muted2);}
+        .tcard{background:var(--bg2);border:1px solid var(--border);border-radius:3px;overflow:hidden;}
+        table.ftable{width:100%;border-collapse:collapse;table-layout:fixed;}
+        table.ftable th{padding:.55rem 1rem;text-align:left;font-family:var(--mono);font-size:.56rem;font-weight:600;color:rgba(248,113,113,.4);text-transform:uppercase;letter-spacing:2px;border-bottom:1px solid var(--border);background:rgba(248,113,113,.03);white-space:nowrap;}
+        table.ftable td{padding:.78rem 1rem;font-family:var(--mono);font-size:.75rem;border-bottom:1px solid rgba(248,113,113,.05);vertical-align:middle;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+        table.ftable tr:last-child td{border-bottom:none;}
+        table.ftable tbody tr{transition:background .12s;}
+        table.ftable tbody tr:hover{background:rgba(248,113,113,.03);}
+        table.ftable th:nth-child(1),table.ftable td:nth-child(1){width:36%;}
+        table.ftable th:nth-child(2),table.ftable td:nth-child(2){width:13%;}
+        table.ftable th:nth-child(3),table.ftable td:nth-child(3){width:16%;}
+        table.ftable th:nth-child(4),table.ftable td:nth-child(4){width:10%;}
+        table.ftable th:nth-child(5),table.ftable td:nth-child(5){width:25%;overflow:visible;}
+
+        /* FILE ICON */
+        .ficon{width:26px;height:26px;border-radius:3px;display:flex;align-items:center;justify-content:center;font-size:.7rem;flex-shrink:0;background:rgba(99,102,241,.1);border:1px solid rgba(99,102,241,.15);}
+        .fname-cell{display:flex;align-items:center;gap:.55rem;}
+        .fname{font-size:.75rem;color:#fff;font-weight:500;overflow:hidden;text-overflow:ellipsis;}
+        .fmeta{font-size:.6rem;color:var(--muted);}
+
+        /* STATUS */
+        .spill{font-family:var(--mono);font-size:.58rem;font-weight:700;padding:.1rem .45rem;border-radius:2px;text-transform:uppercase;letter-spacing:.5px;}
+        .sp-ready{background:rgba(52,211,153,.08);color:var(--green);border:1px solid rgba(52,211,153,.2);}
+        .sp-uploading{background:rgba(251,191,36,.08);color:var(--yellow);border:1px solid rgba(251,191,36,.2);}
+
+        /* ACTION BTNS */
+        .abtn{background:var(--bg3);border:1px solid rgba(248,113,113,.15);color:var(--muted);padding:.22rem .5rem;border-radius:2px;font-size:.66rem;font-family:var(--mono);cursor:pointer;display:inline-flex;align-items:center;gap:.22rem;transition:all .12s;white-space:nowrap;text-decoration:none;}
+        .abtn:hover{color:var(--text);}
+        .abtn.del:hover{color:var(--red);border-color:rgba(248,113,113,.4);}
+
+        /* EMPTY */
+        .empty-state{text-align:center;padding:3rem 1rem;}
+        .empty-state i{font-size:2rem;color:var(--muted2);display:block;margin-bottom:.8rem;}
+        .empty-state p{font-family:var(--mono);font-size:.75rem;color:var(--muted);}
+
+        /* DANGER ZONE */
+        .danger-zone{background:rgba(248,113,113,.04);border:1px solid rgba(248,113,113,.15);border-radius:3px;padding:1.1rem 1.2rem;margin-top:1.4rem;}
+        .dz-title{font-family:var(--mono);font-size:.65rem;color:var(--red);text-transform:uppercase;letter-spacing:2px;margin-bottom:.8rem;display:flex;align-items:center;gap:.4rem;}
+        .dz-row{display:flex;align-items:center;justify-content:space-between;gap:1rem;flex-wrap:wrap;}
+        .dz-desc{font-family:var(--mono);font-size:.72rem;color:var(--muted);}
+        .dz-btn{background:transparent;border:1px solid rgba(248,113,113,.3);color:var(--red);padding:.35rem .85rem;border-radius:2px;font-family:var(--mono);font-size:.7rem;cursor:pointer;display:inline-flex;align-items:center;gap:.35rem;transition:all .15s;}
+        .dz-btn:hover{background:rgba(248,113,113,.1);}
+
+        /* MODAL */
+        .modal-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.85);backdrop-filter:blur(8px);z-index:500;align-items:center;justify-content:center;}
+        .modal-overlay.open{display:flex;}
+        .mbox{background:var(--bg2);border:1px solid rgba(248,113,113,.25);border-radius:3px;padding:1.4rem;width:100%;max-width:400px;margin:1rem;box-shadow:0 0 40px rgba(248,113,113,.08);}
+        .mbox-head{display:flex;align-items:center;gap:.6rem;margin-bottom:1rem;padding-bottom:.9rem;border-bottom:1px solid rgba(248,113,113,.15);}
+        .mbox-icon{width:32px;height:32px;background:rgba(248,113,113,.1);border:1px solid rgba(248,113,113,.2);border-radius:3px;display:flex;align-items:center;justify-content:center;flex-shrink:0;}
+        .mbox-title{font-family:var(--mono);font-size:.85rem;font-weight:700;color:#fff;}
+        .mbox-sub{font-family:var(--mono);font-size:.62rem;color:var(--muted);}
+        .mbox-target{background:rgba(248,113,113,.05);border:1px solid rgba(248,113,113,.15);border-radius:2px;padding:.6rem .85rem;margin-bottom:1rem;}
+        .mbox-name{font-family:var(--mono);font-size:.8rem;font-weight:600;color:#fff;margin-bottom:.1rem;}
+        .mbox-email{font-family:var(--mono);font-size:.65rem;color:rgba(248,113,113,.6);}
+        .mbox-footer{display:flex;gap:.6rem;justify-content:flex-end;}
+        .mbtn-cancel{background:transparent;border:1px solid var(--border);color:var(--muted);border-radius:2px;padding:.4rem .9rem;font-size:.73rem;font-family:var(--mono);cursor:pointer;}
+        .mbtn-cancel:hover{color:var(--text);}
+        .mbtn-del{background:rgba(248,113,113,.12);border:1px solid rgba(248,113,113,.3);color:var(--red);border-radius:2px;padding:.4rem 1rem;font-size:.73rem;font-family:var(--mono);font-weight:700;cursor:pointer;display:flex;align-items:center;gap:.3rem;transition:all .15s;}
+        .mbtn-del:hover{background:var(--red);color:#fff;}
+
+        @media(max-width:900px){.profile-grid{grid-template-columns:1fr 1fr}.profile-main{grid-column:1/3;}}
+        @media(max-width:700px){.sidebar{display:none}.main{padding:1rem}}
+        @media(max-width:580px){.profile-grid{grid-template-columns:1fr}.profile-main{grid-column:1/2;}}
+    </style>
+</head>
+<body>
+
+<!-- TOPBAR -->
+<header class="topbar">
+    <div style="display:flex;align-items:center;gap:.8rem">
+        <a href="/admin" class="brand">
+            <div class="brand-icon"><i class="bi bi-shield-fill-check"></i></div>
+            <span class="brand-text">VAULT<span>HUB</span></span>
+        </a>
+        <span class="admin-tag">root</span>
+    </div>
+    <div class="topbar-right">
+        <div class="sys-status"><span class="sys-dot"></span> system online</div>
+        <div class="admin-chip">
+            <div class="admin-av">
+                <img th:if="${adminProfilePhoto != null and !adminProfilePhoto.isEmpty()}" th:src="${adminProfilePhoto}" style="width:100%;height:100%;object-fit:cover;border-radius:3px;" alt="admin"/>
+                <span th:if="${adminProfilePhoto == null or adminProfilePhoto.isEmpty()}" th:text="${adminInitial}">H</span>
+            </div>
+            <span class="admin-name" th:text="${adminName}">Admin</span>
+        </div>
+        <a href="/logout" class="logout-btn"><i class="bi bi-power"></i> logout</a>
+    </div>
+</header>
+
+<div class="layout">
+    <!-- SIDEBAR -->
+    <aside class="sidebar">
+        <div class="sb-section">
+            <div class="sb-label">// control</div>
+            <a href="/admin" class="sb-item"><i class="bi bi-people-fill"></i> Users</a>
+        </div>
+        <div class="sb-section">
+            <div class="sb-label">// system</div>
+            <a href="/logout" class="sb-item"><i class="bi bi-power"></i> Logout</a>
+        </div>
+        <div class="sb-footer">
+            <div class="sb-footer-text">
+                vaulthub-admin<br/>
+                session: active<br/>
+                <span style="color:rgba(248,113,113,.4)" th:text="${adminName}">harshad</span>@root
+            </div>
+        </div>
+    </aside>
+
+    <!-- MAIN -->
+    <main class="main">
+
+        <!-- BREADCRUMB -->
+        <div class="breadcrumb-bar">
+            <a href="/admin"><i class="bi bi-shield-fill-check"></i> admin</a>
+            <span class="sep">/</span>
+            <a href="/admin">users</a>
+            <span class="sep">/</span>
+            <span class="cur" th:text="${u.fullName}">User</span>
+        </div>
+
+        <!-- PROFILE GRID -->
+        <div class="profile-grid">
+
+            <!-- Identity Card -->
+            <div class="profile-main">
+                <div class="profile-avatar"
+                     th:style="${u.profilePhoto == null or u.profilePhoto.isEmpty()} ? ('background:linear-gradient(135deg,' + (${u.role.name() == 'ADMIN'} ? '#dc2626,#991b1b' : '#1e1b4b,#312e81') + ');border-color:' + (${u.role.name() == 'ADMIN'} ? 'rgba(248,113,113,.3)' : 'rgba(99,102,241,.3)')) : 'border-color:rgba(99,102,241,.3)'">
+                    <img th:if="${u.profilePhoto != null and !u.profilePhoto.isEmpty()}"
+                         th:src="${u.profilePhoto}"
+                         style="width:100%;height:100%;object-fit:cover;border-radius:3px;" alt="avatar"/>
+                    <span th:if="${u.profilePhoto == null or u.profilePhoto.isEmpty()}"
+                          th:text="${u.fullName.substring(0,1).toUpperCase()}">H</span>
+                </div>
+                <div class="profile-name" th:text="${u.fullName}">Full Name</div>
+                <div class="profile-email" th:text="${u.email}">email@example.com</div>
+                <div class="profile-badge-row">
+                    <span class="rbadge"
+                          th:classappend="${u.role.name() == 'ADMIN'} ? 'rb-admin' : 'rb-user'"
+                          th:text="${u.role}">USER</span>
+                    <span class="self-tag" th:if="${isSelf}">you</span>
+                </div>
+            </div>
+
+            <!-- Files Count -->
+            <div class="info-card ic-cyan">
+                <div class="ic-num" th:text="${fileCount}">0</div>
+                <div class="ic-label">total files</div>
+                <div class="ic-sub">stored in vault</div>
+                <div class="ic-icon"><i class="bi bi-folder-fill"></i></div>
+            </div>
+
+            <!-- Storage -->
+            <div class="info-card ic-green">
+                <div class="ic-num" th:text="${storageMB} + ' MB'">0 MB</div>
+                <div class="ic-label">storage used</div>
+                <div class="ic-sub" th:text="${totalBytes} + ' bytes'">0 bytes</div>
+                <div class="ic-icon"><i class="bi bi-hdd-fill"></i></div>
+            </div>
+        </div>
+
+        <!-- METADATA -->
+        <div class="meta-section">
+            <div class="meta-title"><span style="color:rgba(248,113,113,.4)">$</span> user.inspect()</div>
+            <div class="meta-row">
+                <span class="meta-key">db_id</span>
+                <span class="meta-val highlight" th:text="'#' + ${u.id}">—</span>
+            </div>
+            <div class="meta-row">
+                <span class="meta-key">full_name</span>
+                <span class="meta-val" th:text="${u.fullName}">—</span>
+            </div>
+            <div class="meta-row">
+                <span class="meta-key">email</span>
+                <span class="meta-val" th:text="${u.email}">—</span>
+            </div>
+            <div class="meta-row">
+                <span class="meta-key">vault_id</span>
+                <span class="meta-val highlight" th:text="${u.vaultId}">—</span>
+            </div>
+            <div class="meta-row">
+                <span class="meta-key">owner_id</span>
+                <span class="meta-val" th:text="${ownerId}">—</span>
+            </div>
+            <div class="meta-row">
+                <span class="meta-key">role</span>
+                <span class="meta-val red" th:text="${u.role}">USER</span>
+            </div>
+            <div class="meta-row">
+                <span class="meta-key">registered</span>
+                <span class="meta-val join-ts" th:data-date="${u.createdAt}" th:text="${u.createdAt}">—</span>
+            </div>
+        </div>
+
+        <!-- FILES TABLE -->
+        <div class="section-head">
+            <div class="section-title"><span style="color:var(--red)">//</span> vault files</div>
+            <span class="section-count" th:text="${fileCount} + ' files'">0 files</span>
+        </div>
+
+        <div class="search-row" th:if="${fileCount > 0}">
+            <div class="search-box">
+                <i class="bi bi-search"></i>
+                <input type="text" id="fileSearch" placeholder="filter files..." oninput="filterFiles()"/>
+            </div>
+        </div>
+
+        <div class="tcard" th:if="${fileCount > 0}">
+            <div style="overflow-x:auto">
+                <table class="ftable" id="fileTable">
+                    <thead><tr>
+                        <th>filename</th>
+                        <th>size</th>
+                        <th>uploaded</th>
+                        <th>status</th>
+                        <th>actions</th>
+                    </tr></thead>
+                    <tbody>
+                    <tr th:each="f : ${files}"
+                        th:data-name="${f.fileName}">
+                        <td>
+                            <div class="fname-cell">
+                                <div class="ficon"><i class="bi bi-file-earmark-fill" style="color:#818cf8"></i></div>
+                                <div>
+                                    <div class="fname" th:text="${f.fileName}">file.pdf</div>
+                                    <div class="fmeta" th:text="${f.mimeType}">type</div>
+                                </div>
+                            </div>
+                        </td>
+                        <td style="font-family:var(--mono);font-size:.72rem" th:text="${f.sizeMB}">0 MB</td>
+                        <td class="file-date" th:data-date="${f.createdAt}" th:text="${f.createdAt}" style="font-size:.68rem;color:var(--muted)">—</td>
+                        <td>
+                            <span class="spill"
+                                  th:classappend="${f.status == 'READY'} ? 'sp-ready' : 'sp-uploading'"
+                                  th:text="${f.status}">READY</span>
+                        </td>
+                        <td>
+                            <div style="display:flex;gap:.3rem;align-items:center">
+                                <a th:href="@{/admin/files/view/}+${f.fileUuid}" target="_blank" class="abtn">
+                                    <i class="bi bi-eye"></i> view
+                                </a>
+                                <a th:href="@{/files/download/}+${f.fileUuid}" class="abtn">
+                                    <i class="bi bi-download"></i>
+                                </a>
+                            </div>
+                        </td>
+                    </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <div class="tcard empty-state" th:if="${fileCount == 0}">
+            <i class="bi bi-folder2"></i>
+            <p>no files in vault</p>
+        </div>
+
+        <!-- DANGER ZONE -->
+        <div class="danger-zone" th:if="${!isSelf}">
+            <div class="dz-title"><i class="bi bi-exclamation-triangle-fill"></i> danger zone</div>
+            <div class="dz-row">
+                <span class="dz-desc">Permanently delete this user and all their vault files.</span>
+                <button class="dz-btn" onclick="openDel()">
+                    <i class="bi bi-person-x-fill"></i> rm -rf user
+                </button>
+            </div>
+        </div>
+
+    </main>
+</div>
+
+<!-- DELETE MODAL -->
+<div class="modal-overlay" id="delModal" onclick="if(event.target===this)closeDel()">
+    <div class="mbox">
+        <div class="mbox-head">
+            <div class="mbox-icon"><i class="bi bi-person-x-fill" style="color:var(--red);font-size:.85rem"></i></div>
+            <div>
+                <div class="mbox-title">rm -rf user</div>
+                <div class="mbox-sub">deletes account + all vault files · irreversible</div>
+            </div>
+        </div>
+        <div class="mbox-target">
+            <div class="mbox-name" th:text="${u.fullName}">Name</div>
+            <div class="mbox-email" th:text="${u.email}">email</div>
+        </div>
+        <div class="mbox-footer">
+            <button onclick="closeDel()" class="mbtn-cancel">cancel</button>
+            <form th:action="@{/admin/users/{id}/delete(id=${u.id})}" method="post" style="display:inline">
+                <button type="submit" class="mbtn-del"><i class="bi bi-trash3"></i> confirm delete</button>
+            </form>
+        </div>
+    </div>
+</div>
+
+<script>
+// Format dates
+document.querySelectorAll('.file-date,.join-ts').forEach(el => {
+    const raw = el.getAttribute('data-date') || el.textContent;
+    if (!raw || raw === '—') return;
+    try {
+        el.textContent = new Date(raw).toLocaleDateString('en-GB', {
+            day:'2-digit', month:'short', year:'numeric',
+            hour:'2-digit', minute:'2-digit'
+        });
+    } catch(e) {}
+});
+
+// Filter files
+function filterFiles() {
+    const q = document.getElementById('fileSearch').value.toLowerCase();
+    document.querySelectorAll('#fileTable tbody tr').forEach(row => {
+        const name = (row.dataset.name || '').toLowerCase();
+        row.style.display = name.includes(q) ? '' : 'none';
+    });
+}
+
+// Delete modal
+function openDel()  { document.getElementById('delModal').classList.add('open'); }
+function closeDel() { document.getElementById('delModal').classList.remove('open'); }
+document.addEventListener('keydown', e => { if (e.key === 'Escape') closeDel(); });
+</script>
+</body>
+</html>

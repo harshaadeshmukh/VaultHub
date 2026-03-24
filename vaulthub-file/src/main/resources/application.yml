@@ -1,0 +1,79 @@
+server:
+  port: 8082
+  # 🧠 THIS WAS MISSING — causes viewer session auth to fail
+  #    Without this, Spring ignores X-Forwarded headers from Gateway
+  #    Result: session not trusted → /files/stream redirects to login
+  forward-headers-strategy: framework
+  tomcat:
+    max-threads: 50
+    min-spare-threads: 10
+    connection-timeout: 60000
+    max-swallow-size: -1
+  compression:
+    enabled: true
+    mime-types: text/html,text/css,application/json
+    min-response-size: 2048
+
+spring:
+  application:
+    name: vaulthub-file
+  data:
+    redis:
+      host: merry-impala-66504.upstash.io
+      port: 6379
+      password: gQAAAAAAAQPIAAIncDI0MjY1N2JhODNmNjg0ODg1OTJkZDliNzMxNGY0ZTVlY3AyNjY1MDQ
+      ssl:
+        enabled: true
+  session:
+    store-type: redis
+    timeout: 86400
+    redis:
+      namespace: vaulthub:session
+  datasource:
+    url: jdbc:mysql://localhost:3306/vaulthub_file?createDatabaseIfNotExist=true
+    username: root
+    password: harshad@123#
+    driver-class-name: com.mysql.cj.jdbc.Driver
+    hikari:
+      maximum-pool-size: 15
+      minimum-idle: 5
+      connection-timeout: 3000
+      idle-timeout: 300000
+  jpa:
+    hibernate:
+      ddl-auto: update
+    show-sql: true
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.MySQLDialect
+        format_sql: true
+  thymeleaf:
+    encoding: UTF-8
+    cache: false
+    prefix: classpath:/templates/
+    suffix: .html
+  servlet:
+    multipart:
+      enabled: true
+      max-file-size: 500MB
+      max-request-size: 500MB
+
+eureka:
+  client:
+    enabled: false
+    register-with-eureka: false
+    fetch-registry: false
+
+jwt:
+  secret: vaulthub-super-secret-key-2024-very-long
+  expiration: 86400000
+
+services:
+  chunk-url: http://localhost:8083
+  node-url: http://localhost:8084
+  blockchain-url: http://localhost:8085
+  notify-url: http://localhost:8086
+
+storage:
+  path: C:/vault-storage
+  chunk-size-bytes: 10485760

@@ -1,0 +1,365 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8"/>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+    <title>Activity Log — VaultHub</title>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet"/>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet"/>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css" rel="stylesheet"/>
+    <style>
+
+        /* ── FLUID TYPOGRAPHY SCALE ──────────────────────────────
+           Root font-size scales 13px→16px across 360px→1280px.
+           Every rem unit scales automatically. ── */
+        html { font-size: clamp(13px, 0.8rem + 0.8vw, 16px); }
+        @media(max-width:480px) {
+            .page-header h4,.ph-title { font-size: clamp(1rem, 4vw, 1.2rem) !important; }
+            .sp-val,.sc-val,.as-val,.mobile-stat-val { font-size: clamp(.9rem, 3.5vw, 1.2rem) !important; }
+            .fname,.fcard-name,.log-action { font-size: clamp(.78rem, 3.2vw, .88rem) !important; }
+            .fmeta,.fcard-size,.log-file,.log-time { font-size: clamp(.62rem, 2.5vw, .72rem) !important; }
+            .nav-label,.sp-lbl,.sc-lbl,.as-lbl { font-size: clamp(.5rem, 2vw, .6rem) !important; }
+            .bnav a { font-size: clamp(.48rem, 1.8vw, .54rem) !important; }
+            .act-btn,.sheet-btn { font-size: clamp(.74rem, 3vw, .84rem) !important; }
+            .modal-title { font-size: clamp(.85rem, 3.5vw, .95rem) !important; }
+            .chat-header-info .name { font-size: clamp(.8rem, 3.5vw, .9rem) !important; }
+            .msg-bubble { font-size: clamp(.78rem, 3.2vw, .85rem) !important; }
+        }
+        /* ── FLUID TYPOGRAPHY SCALE ─────────────────────────────
+           Root font-size scales from 13px (360px screen)
+           to 16px (1280px screen) using clamp + viewport units.
+           Every rem unit in the app scales automatically.
+           ──────────────────────────────────────────────────── */
+        
+
+        /* Fine-tune specific text roles at small screens */
+        @media(max-width:480px) {
+            .page-header h4, .ph-title { font-size: clamp(1rem, 4vw, 1.2rem) !important; }
+            .sp-val, .sc-val, .as-val, .mobile-stat-val { font-size: clamp(.9rem, 3.5vw, 1.2rem) !important; }
+            .fname, .fcard-name, .log-action { font-size: clamp(.78rem, 3.2vw, .88rem) !important; }
+            .fmeta, .fcard-size, .log-file, .log-time { font-size: clamp(.62rem, 2.5vw, .72rem) !important; }
+            .nav-label, .sp-lbl, .sc-lbl, .as-lbl { font-size: clamp(.5rem, 2vw, .6rem) !important; }
+            .bnav a { font-size: clamp(.48rem, 1.8vw, .54rem) !important; }
+            .act-btn, .sheet-btn { font-size: clamp(.74rem, 3vw, .84rem) !important; }
+            .modal-title { font-size: clamp(.85rem, 3.5vw, .95rem) !important; }
+            .chat-header-info .name { font-size: clamp(.8rem, 3.5vw, .9rem) !important; }
+            .msg-bubble { font-size: clamp(.78rem, 3.2vw, .85rem) !important; }
+        }
+
+        :root {
+            --bg:#080810; --bg2:#0e0e1a; --bg3:#13131f; --bg4:#1a1a2e;
+            --border:#1e1e32; --border2:#252540;
+            --accent:#6366f1; --accent2:#818cf8; --accent3:#a5b4fc;
+            --cyan:#22d3ee; --green:#34d399; --yellow:#fbbf24; --red:#f87171;
+            --text:#e8e8f5; --muted:#52526e; --muted2:#3a3a55;
+            --font:'Plus Jakarta Sans',sans-serif; --mono:'JetBrains Mono',monospace;
+        }
+        *{margin:0;padding:0;box-sizing:border-box;}
+        html{height:100%;overflow:hidden;}
+        body{font-family:var(--font);background:var(--bg);color:var(--text);height:100vh;overflow:hidden;}
+        body::before{content:'';position:fixed;inset:0;pointer-events:none;z-index:0;
+            background:radial-gradient(ellipse 600px 400px at 20% 10%,rgba(99,102,241,.06) 0%,transparent 70%),
+                       radial-gradient(ellipse 400px 400px at 80% 80%,rgba(34,211,238,.04) 0%,transparent 70%);}
+
+        .topbar{position:sticky;top:0;z-index:100;background:rgba(8,8,16,.92);backdrop-filter:blur(16px);border-bottom:1px solid var(--border);padding:0 1.5rem;height:52px;display:flex;align-items:center;justify-content:space-between;}
+        .brand{font-size:1.05rem;font-weight:800;letter-spacing:-.3px;text-decoration:none;display:flex;align-items:center;gap:.4rem;}
+        .brand-icon{font-size:1.1rem;}
+        .brand-text{color:var(--accent3);}.brand-text span{color:#fff;}
+        .topbar-right{display:flex;align-items:center;gap:.6rem;}
+        .user-pill{display:flex;align-items:center;gap:.5rem;background:var(--bg3);border:1px solid var(--border2);border-radius:24px;padding:.22rem .8rem .22rem .28rem;}
+        .av{width:26px;height:26px;border-radius:50%;background:linear-gradient(135deg,var(--accent),var(--cyan));display:flex;align-items:center;justify-content:center;font-size:.7rem;font-weight:800;color:#fff;flex-shrink:0;}
+        .av-name{font-size:.78rem;font-weight:600;}
+        .logout-btn{background:transparent;border:1px solid var(--border2);color:var(--muted);padding:.25rem .65rem;border-radius:7px;font-size:.74rem;font-family:var(--font);text-decoration:none;display:flex;align-items:center;gap:.28rem;transition:all .2s;}
+        .logout-btn:hover{border-color:var(--red);color:var(--red);}
+        .layout{display:flex;height:calc(100vh - 52px);position:relative;z-index:1;overflow:hidden;}
+        .sidebar{width:210px;flex-shrink:0;background:var(--bg2);border-right:1px solid var(--border);padding:1.2rem .7rem;display:flex;flex-direction:column;height:100%;overflow-y:auto;}
+        .nav-section{margin-bottom:.3rem;}
+        .nav-label{font-size:.55rem;font-weight:700;letter-spacing:2px;text-transform:uppercase;color:var(--muted2);padding:.6rem .6rem .3rem;}
+        .nav-item{display:flex;align-items:center;gap:.6rem;padding:.48rem .65rem;border-radius:8px;text-decoration:none;color:var(--muted);font-size:.8rem;font-weight:500;transition:all .15s;margin-bottom:1px;}
+        .nav-item:hover{background:var(--bg3);color:var(--text);}
+        .nav-item.active{background:rgba(99,102,241,.12);color:var(--accent3);border-left:2px solid var(--accent);padding-left:calc(.65rem - 2px);}
+        .nav-item i{font-size:.85rem;width:16px;text-align:center;flex-shrink:0;}
+        .sidebar-footer{margin-top:auto;padding-top:1rem;border-top:1px solid var(--border);}
+        .sf-text{font-size:.62rem;color:var(--muted2);text-align:center;line-height:1.6;font-family:var(--mono);}
+        .main{flex:1;padding:1.5rem;overflow-y:auto;height:100%;}
+
+        /* HEADER */
+        .page-header{display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:1.4rem;flex-wrap:wrap;gap:1rem;}
+        .page-header h4{font-size:1.15rem;font-weight:800;color:#fff;letter-spacing:-.3px;margin:0 0 .2rem;}
+        .page-header p{font-size:.76rem;color:var(--muted);margin:0;}
+
+        /* STATS ROW */
+        .act-stats{display:flex;gap:.8rem;margin-bottom:1.3rem;flex-wrap:wrap;}
+        .act-stat{background:var(--bg2);border:1px solid var(--border);border-radius:10px;padding:.75rem 1rem;display:flex;align-items:center;gap:.65rem;flex:1;min-width:120px;}
+        .as-icon{width:32px;height:32px;border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:.85rem;flex-shrink:0;}
+        .as-val{font-size:1.2rem;font-weight:800;color:#fff;line-height:1;font-family:var(--mono);}
+        .as-lbl{font-size:.6rem;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:1px;margin-top:2px;}
+
+        /* FILTER PILLS */
+        .filter-row{display:flex;gap:.4rem;margin-bottom:1rem;flex-wrap:wrap;}
+        .filter-pill{background:var(--bg3);border:1px solid var(--border2);color:var(--muted);padding:.25rem .7rem;border-radius:20px;font-size:.72rem;font-weight:600;font-family:var(--font);cursor:pointer;transition:all .15s;}
+        .filter-pill:hover,.filter-pill.active{background:rgba(99,102,241,.1);border-color:var(--accent);color:var(--accent3);}
+
+        /* TIMELINE */
+        .timeline-wrap{background:var(--bg2);border:1px solid var(--border);border-radius:12px;overflow:hidden;}
+        .tl-head{padding:.85rem 1.1rem;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;}
+        .tl-title{font-size:.82rem;font-weight:700;color:var(--text);display:flex;align-items:center;gap:.45rem;}
+        .live-dot{width:7px;height:7px;border-radius:50%;background:var(--green);box-shadow:0 0 6px var(--green);display:inline-block;animation:pulse 2s infinite;}
+        @keyframes pulse{0%,100%{opacity:1}50%{opacity:.4}}
+        .tl-count{font-size:.7rem;font-family:var(--mono);color:var(--muted);}
+
+        /* LOG ITEM */
+        .log-item{display:flex;align-items:flex-start;gap:.9rem;padding:.85rem 1.1rem;border-bottom:1px solid rgba(30,30,50,.6);transition:background .15s;position:relative;}
+        .log-item:last-child{border-bottom:none;}
+        .log-item:hover{background:rgba(99,102,241,.03);}
+        .log-icon{width:34px;height:34px;border-radius:9px;display:flex;align-items:center;justify-content:center;font-size:.9rem;flex-shrink:0;margin-top:1px;}
+        .log-body{flex:1;min-width:0;}
+        .log-action{font-size:.82rem;font-weight:600;color:#fff;margin-bottom:.18rem;}
+        .log-file{font-size:.72rem;color:var(--muted);font-family:var(--mono);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+        .log-detail{font-size:.68rem;color:var(--muted2);margin-top:.1rem;}
+        .log-time{font-size:.67rem;color:var(--muted2);font-family:var(--mono);flex-shrink:0;text-align:right;margin-top:2px;}
+        .log-type-badge{display:inline-flex;align-items:center;gap:.2rem;font-size:.6rem;font-family:var(--mono);padding:.1rem .42rem;border-radius:20px;margin-left:.5rem;vertical-align:middle;}
+
+        /* EMPTY */
+        .tl-empty{text-align:center;padding:4rem 1rem;}
+        .te-icon{width:52px;height:52px;background:var(--bg3);border:1px solid var(--border2);border-radius:14px;display:flex;align-items:center;justify-content:center;font-size:1.3rem;margin:0 auto .9rem;}
+        .tl-empty h6{font-size:.9rem;font-weight:700;color:var(--text);margin-bottom:.3rem;}
+        .tl-empty p{font-size:.77rem;color:var(--muted);}
+
+        /* MOBILE */
+        .bnav{display:none;position:fixed;bottom:0;left:0;right:0;background:rgba(8,8,16,.97);border-top:1px solid var(--border);backdrop-filter:blur(12px);padding:.4rem 0 env(safe-area-inset-bottom,.2rem);z-index:200;}
+        .bnav a{flex:1;display:flex;flex-direction:column;align-items:center;gap:.1rem;text-decoration:none;color:var(--muted2);font-size:.52rem;font-weight:700;letter-spacing:.5px;text-transform:uppercase;transition:color .2s;padding:.2rem 0;}
+        .bnav a i{font-size:1.1rem;}
+        .bnav a.active,.bnav a:hover{color:var(--accent3);}
+        @media(max-width:768px){.sidebar{display:none;}.main{padding:.85rem;padding-bottom:74px;}.bnav{display:flex;}}
+        @media(max-width:580px){.topbar{padding:0 1rem}.av-name{display:none}.act-stats{gap:.5rem}}
+    </style>
+</head>
+<body>
+
+<header class="topbar">
+    <a href="/dashboard" class="brand">
+        <span class="brand-icon">🗂️</span>
+        <span class="brand-text">Vault<span>Hub</span></span>
+    </a>
+    <div class="topbar-right">
+        <div class="user-pill">
+            <div class="av" style="overflow:hidden;padding:0;">
+                <img th:if="${profilePhoto != null and !profilePhoto.isEmpty()}" th:src="${profilePhoto}" style="width:100%;height:100%;object-fit:cover;border-radius:50%;" alt="avatar"/>
+                <span th:if="${profilePhoto == null or profilePhoto.isEmpty()}" th:text="${#strings.substring(displayName,0,1).toUpperCase()}">H</span>
+            </div>
+            <span class="av-name" th:text="${displayName}">Harshad</span>
+        </div>
+        <a href="/logout" class="logout-btn">
+            <i class="bi bi-box-arrow-right"></i>
+            <span class="d-none d-sm-inline">Logout</span>
+        </a>
+    </div>
+</header>
+
+<div class="layout">
+    <aside class="sidebar">
+        <div class="nav-section">
+            <div class="nav-label">Main</div>
+            <a href="/dashboard" class="nav-item"><i class="bi bi-grid-1x2-fill"></i> Dashboard</a>
+            <a href="/files" class="nav-item"><i class="bi bi-folder2-open"></i> My Files</a>
+            <a href="/files/upload" class="nav-item"><i class="bi bi-cloud-upload"></i> Upload File</a>
+            <a href="/files/shared" class="nav-item"><i class="bi bi-share-fill"></i> Shared With Me</a>
+        </div>
+        <div class="nav-section">
+            <div class="nav-label">Vault</div>
+            <a href="/activity" class="nav-item active"><i class="bi bi-activity"></i> Activity Log</a>
+            <a href="/chat" class="nav-item"><i class="bi bi-chat-dots-fill"></i> Chat</a>
+        </div>
+        <div class="nav-section">
+            <div class="nav-label">Account</div>
+            <a href="/settings" class="nav-item"><i class="bi bi-gear-fill"></i> Settings</a>
+        </div>
+            <div class="nav-section" th:if="${isAdmin}">
+                <div class="nav-label">System</div>
+                <a href="/admin" class="nav-item" style="color:var(--red);opacity:.85"><i class="bi bi-shield-fill-check"></i> Admin Panel</a>
+            </div>
+        <div class="sidebar-footer">
+            <div class="sf-text">VaultHub · Secure Storage</div>
+        </div>
+    </aside>
+
+    <main class="main">
+
+        <div class="page-header">
+            <div>
+                <h4><i class="bi bi-activity" style="color:var(--accent2)"></i> Activity Log</h4>
+                <p>Every action in your vault — uploads, downloads, shares and more</p>
+            </div>
+        </div>
+
+        <!-- STATS -->
+        <div class="act-stats">
+            <div class="act-stat">
+                <div class="as-icon" style="background:rgba(99,102,241,.1)"><i class="bi bi-lightning-fill" style="color:var(--accent2)"></i></div>
+                <div>
+                    <div class="as-val" th:text="${totalActions}">0</div>
+                    <div class="as-lbl">Total Actions</div>
+                </div>
+            </div>
+            <div class="act-stat" id="statUploads">
+                <div class="as-icon" style="background:rgba(52,211,153,.08)"><i class="bi bi-cloud-upload-fill" style="color:var(--green)"></i></div>
+                <div>
+                    <div class="as-val" id="cntUpload">0</div>
+                    <div class="as-lbl">Uploads</div>
+                </div>
+            </div>
+            <div class="act-stat">
+                <div class="as-icon" style="background:rgba(34,211,238,.08)"><i class="bi bi-download" style="color:var(--cyan)"></i></div>
+                <div>
+                    <div class="as-val" id="cntDownload">0</div>
+                    <div class="as-lbl">Downloads</div>
+                </div>
+            </div>
+            <div class="act-stat">
+                <div class="as-icon" style="background:rgba(251,191,36,.08)"><i class="bi bi-share-fill" style="color:var(--yellow)"></i></div>
+                <div>
+                    <div class="as-val" id="cntShare">0</div>
+                    <div class="as-lbl">Shares</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- FILTER -->
+        <div class="filter-row">
+            <button class="filter-pill active" data-filter="ALL">All</button>
+            <button class="filter-pill" data-filter="UPLOAD">Uploads</button>
+            <button class="filter-pill" data-filter="DOWNLOAD">Downloads</button>
+            <button class="filter-pill" data-filter="VIEW">Views</button>
+            <button class="filter-pill" data-filter="SHARE_SENT">Shares Sent</button>
+            <button class="filter-pill" data-filter="SHARE_RECEIVED">Shares Received</button>
+            <button class="filter-pill" data-filter="DELETE">Deletions</button>
+        </div>
+
+        <!-- TIMELINE -->
+        <div class="timeline-wrap">
+            <div class="tl-head">
+                <div class="tl-title"><span class="live-dot"></span> Vault Activity</div>
+                <span class="tl-count" th:text="${#lists.size(logs)} + ' events'">0 events</span>
+            </div>
+
+            <!-- EMPTY STATE -->
+            <div class="tl-empty" th:if="${logs == null or #lists.isEmpty(logs)}">
+                <div class="te-icon"><i class="bi bi-clock-history" style="color:var(--muted2)"></i></div>
+                <h6>No activity yet</h6>
+                <p>Actions like uploads, downloads and shares will appear here.</p>
+            </div>
+
+            <!-- LOG ITEMS -->
+            <div id="logList" th:if="${logs != null and !#lists.isEmpty(logs)}">
+                <div class="log-item"
+                     th:each="log : ${logs}"
+                     th:data-type="${log.type}">
+
+                    <!-- Icon per type -->
+                    <div class="log-icon"
+                         th:style="${log.type.name() == 'UPLOAD'}         ? 'background:rgba(52,211,153,.1)'  :
+                                    (${log.type.name() == 'DOWNLOAD'}     ? 'background:rgba(34,211,238,.08)' :
+                                    (${log.type.name() == 'DELETE'}       ? 'background:rgba(248,113,113,.1)' :
+                                    (${log.type.name() == 'SHARE_SENT'}   ? 'background:rgba(251,191,36,.08)' :
+                                    (${log.type.name() == 'SHARE_RECEIVED'} ? 'background:rgba(99,102,241,.1)' :
+                                    (${log.type.name() == 'VIEW'}         ? 'background:rgba(163,163,163,.08)':
+                                    'background:rgba(99,102,241,.1)' )))))">
+                        <i th:class="${log.type.name() == 'UPLOAD'}          ? 'bi bi-cloud-upload-fill'  :
+                                      (${log.type.name() == 'DOWNLOAD'}      ? 'bi bi-download'           :
+                                      (${log.type.name() == 'DELETE'}        ? 'bi bi-trash-fill'         :
+                                      (${log.type.name() == 'SHARE_SENT'}    ? 'bi bi-share-fill'         :
+                                      (${log.type.name() == 'SHARE_RECEIVED'}? 'bi bi-box-arrow-in-down'  :
+                                      (${log.type.name() == 'VIEW'}          ? 'bi bi-eye-fill'           :
+                                      'bi bi-lightning-fill' )))))"
+                           th:style="${log.type.name() == 'UPLOAD'}           ? 'color:var(--green)'   :
+                                      (${log.type.name() == 'DOWNLOAD'}       ? 'color:var(--cyan)'    :
+                                      (${log.type.name() == 'DELETE'}         ? 'color:var(--red)'     :
+                                      (${log.type.name() == 'SHARE_SENT'}     ? 'color:var(--yellow)'  :
+                                      (${log.type.name() == 'SHARE_RECEIVED'} ? 'color:var(--accent3)' :
+                                      (${log.type.name() == 'VIEW'}           ? 'color:var(--muted)'   :
+                                      'color:var(--accent2)' )))))">
+                        </i>
+                    </div>
+
+                    <div class="log-body">
+                        <div class="log-action">
+                            <span th:text="${log.type.name() == 'UPLOAD'}           ? 'File Uploaded'     :
+                                            (${log.type.name() == 'DOWNLOAD'}       ? 'File Downloaded'   :
+                                            (${log.type.name() == 'DELETE'}         ? 'File Deleted'      :
+                                            (${log.type.name() == 'SHARE_SENT'}     ? 'File Shared'       :
+                                            (${log.type.name() == 'SHARE_RECEIVED'} ? 'File Received'     :
+                                            (${log.type.name() == 'VIEW'}           ? 'File Viewed'       :
+                                            'Action' )))))">Action</span>
+                        </div>
+                        <div class="log-file" th:text="${log.fileName != null ? log.fileName : log.fileUuid}">filename</div>
+                        <div class="log-detail" th:if="${log.detail != null}"
+                             th:text="${log.type.name() == 'SHARE_SENT'}     ? '→ Shared with ' + ${log.detail} :
+                                        (${log.type.name() == 'SHARE_RECEIVED'} ? '← From ' + ${log.detail} : ${log.detail})">
+                        </div>
+                    </div>
+
+                    <div class="log-time log-ts" th:data-date="${log.createdAt}">—</div>
+                </div>
+            </div>
+        </div>
+
+    </main>
+</div>
+
+<nav class="bnav">
+    <a href="/dashboard"><i class="bi bi-grid-1x2-fill"></i>Home</a>
+    <a href="/files"><i class="bi bi-folder2-open"></i>Files</a>
+    <a href="/chat"><i class="bi bi-chat-dots-fill"></i>Chat</a>
+    <a href="/activity" class="active"><i class="bi bi-activity"></i>Activity</a>
+    <a href="/settings"><i class="bi bi-gear-fill"></i>Settings</a>
+</nav>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+<script>
+// ── Format timestamps ──
+document.querySelectorAll('.log-ts').forEach(el => {
+    const raw = el.getAttribute('data-date');
+    if (!raw) return;
+    try {
+        const d = new Date(raw), now = new Date();
+        const diff = now - d;
+        const mins = Math.floor(diff / 60000);
+        const hours = Math.floor(diff / 3600000);
+        const days = Math.floor(diff / 86400000);
+        if (mins < 1)        el.textContent = 'Just now';
+        else if (mins < 60)  el.textContent = mins + 'm ago';
+        else if (hours < 24) el.textContent = hours + 'h ago';
+        else if (days < 7)   el.textContent = days + 'd ago';
+        else el.textContent = d.toLocaleDateString('en-GB', {day:'numeric',month:'short'});
+    } catch(e) {}
+});
+
+// ── Count stats ──
+const items = document.querySelectorAll('.log-item');
+let uploads=0, downloads=0, shares=0;
+items.forEach(item => {
+    const t = item.getAttribute('data-type');
+    if (t === 'UPLOAD') uploads++;
+    else if (t === 'DOWNLOAD') downloads++;
+    else if (t === 'SHARE_SENT' || t === 'SHARE_RECEIVED') shares++;
+});
+document.getElementById('cntUpload').textContent   = uploads;
+document.getElementById('cntDownload').textContent = downloads;
+document.getElementById('cntShare').textContent    = shares;
+
+// ── Filter pills ──
+document.querySelectorAll('.filter-pill').forEach(pill => {
+    pill.addEventListener('click', function() {
+        document.querySelectorAll('.filter-pill').forEach(p => p.classList.remove('active'));
+        this.classList.add('active');
+        const filter = this.getAttribute('data-filter');
+        items.forEach(item => {
+            const type = item.getAttribute('data-type');
+            item.style.display = (filter === 'ALL' || type === filter) ? '' : 'none';
+        });
+    });
+});
+</script>
+</body>
+</html>

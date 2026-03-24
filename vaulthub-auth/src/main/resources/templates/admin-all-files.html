@@ -1,0 +1,320 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8"/>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+    <title>All Files — VaultHub Admin</title>
+    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet"/>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet"/>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css" rel="stylesheet"/>
+    <style>
+        :root{--bg:#05050a;--bg2:#080810;--bg3:#0d0d18;--bg4:#111120;
+              --border:rgba(248,113,113,.1);
+              --red:#f87171;--green:#34d399;--yellow:#fbbf24;--cyan:#22d3ee;--blue:#6366f1;
+              --text:#e0e0f0;--muted:#4a4a6a;--muted2:#333350;
+              --mono:'JetBrains Mono',monospace;--inter:'Inter',sans-serif;}
+        *{margin:0;padding:0;box-sizing:border-box;}
+        body{font-family:var(--inter);background:var(--bg);color:var(--text);min-height:100vh;overflow-x:hidden;}
+        body::before{content:'';position:fixed;inset:0;background:repeating-linear-gradient(0deg,transparent,transparent 3px,rgba(0,0,0,.08) 3px,rgba(0,0,0,.08) 4px);pointer-events:none;z-index:0;}
+        body::after{content:'';position:fixed;inset:0;background:radial-gradient(ellipse 800px 600px at 50% 20%,rgba(248,113,113,.04) 0%,transparent 70%);pointer-events:none;z-index:0;}
+
+        .topbar{position:sticky;top:0;z-index:100;background:rgba(5,5,10,.97);backdrop-filter:blur(20px);border-bottom:1px solid var(--border);padding:0 1.5rem;height:54px;display:flex;align-items:center;justify-content:space-between;}
+        .brand{display:flex;align-items:center;gap:.65rem;text-decoration:none;}
+        .brand-icon{width:28px;height:28px;background:rgba(248,113,113,.12);border:1px solid rgba(248,113,113,.25);border-radius:6px;display:flex;align-items:center;justify-content:center;font-size:.75rem;color:var(--red);}
+        .brand-text{font-family:var(--mono);font-size:.85rem;font-weight:700;color:#fff;letter-spacing:1px;}
+        .brand-text span{color:var(--red);}
+        .admin-tag{font-family:var(--mono);font-size:.58rem;background:rgba(248,113,113,.1);border:1px solid rgba(248,113,113,.25);color:var(--red);padding:.08rem .45rem;border-radius:3px;letter-spacing:2px;text-transform:uppercase;}
+        .topbar-right{display:flex;align-items:center;gap:.7rem;}
+        .sys-dot{width:6px;height:6px;border-radius:50%;background:var(--green);box-shadow:0 0 6px var(--green);animation:pulse 2s infinite;}
+        @keyframes pulse{0%,100%{opacity:1}50%{opacity:.3}}
+        .sys-status{display:flex;align-items:center;gap:.35rem;font-family:var(--mono);font-size:.62rem;color:var(--muted);}
+        .admin-chip{display:flex;align-items:center;gap:.45rem;background:var(--bg3);border:1px solid var(--border);border-radius:3px;padding:.25rem .75rem;}
+        .admin-av{width:22px;height:22px;background:linear-gradient(135deg,var(--red),#dc2626);border-radius:3px;display:flex;align-items:center;justify-content:center;font-size:.62rem;font-weight:700;color:#fff;}
+        .admin-name{font-family:var(--mono);font-size:.72rem;color:var(--text);}
+        .logout-btn{font-family:var(--mono);font-size:.68rem;background:transparent;border:1px solid var(--border);color:var(--muted);padding:.25rem .65rem;border-radius:3px;text-decoration:none;display:flex;align-items:center;gap:.3rem;transition:all .2s;}
+        .logout-btn:hover{border-color:var(--red);color:var(--red);}
+
+        .layout{display:flex;min-height:calc(100vh - 54px);position:relative;z-index:1;}
+
+        .sidebar{width:220px;flex-shrink:0;background:var(--bg2);border-right:1px solid var(--border);padding:1.2rem .8rem;display:flex;flex-direction:column;}
+        .sb-section{margin-bottom:1.5rem;}
+        .sb-label{font-family:var(--mono);font-size:.55rem;color:rgba(248,113,113,.35);letter-spacing:3px;text-transform:uppercase;padding:.4rem .6rem;margin-bottom:.2rem;}
+        .sb-item{display:flex;align-items:center;gap:.6rem;padding:.5rem .65rem;border-radius:3px;text-decoration:none;color:var(--muted);font-family:var(--mono);font-size:.75rem;transition:all .15s;margin-bottom:1px;}
+        .sb-item:hover{background:rgba(248,113,113,.06);color:var(--text);}
+        .sb-item.active{background:rgba(248,113,113,.1);color:var(--red);border-left:2px solid var(--red);padding-left:calc(.65rem - 2px);}
+        .sb-item i{font-size:.8rem;width:14px;text-align:center;flex-shrink:0;}
+        .sb-badge{margin-left:auto;font-family:var(--mono);font-size:.58rem;background:rgba(248,113,113,.1);color:var(--red);padding:.05rem .35rem;border-radius:2px;}
+        .sb-footer{margin-top:auto;padding-top:1rem;border-top:1px solid var(--border);}
+        .sb-footer-text{font-family:var(--mono);font-size:.58rem;color:var(--muted2);text-align:center;line-height:1.8;}
+
+        .main{flex:1;padding:1.5rem;overflow-y:auto;}
+
+        .breadcrumb-bar{display:flex;align-items:center;gap:.4rem;font-family:var(--mono);font-size:.68rem;color:var(--muted);margin-bottom:1.4rem;}
+        .breadcrumb-bar a{color:var(--muted);text-decoration:none;}
+        .breadcrumb-bar a:hover{color:var(--red);}
+        .breadcrumb-bar .sep{color:rgba(248,113,113,.3);}
+        .breadcrumb-bar .cur{color:var(--text);}
+
+        /* STATS */
+        .stats-row{display:grid;grid-template-columns:repeat(3,1fr);gap:.85rem;margin-bottom:1.4rem;}
+        .stat-card{background:var(--bg2);border:1px solid var(--border);border-radius:3px;padding:1rem 1.1rem;position:relative;overflow:hidden;}
+        .stat-card::before{content:'';position:absolute;top:0;left:0;right:0;height:1px;}
+        .sc1::before{background:linear-gradient(90deg,transparent,var(--red),transparent);}
+        .sc2::before{background:linear-gradient(90deg,transparent,var(--cyan),transparent);}
+        .sc3::before{background:linear-gradient(90deg,transparent,var(--green),transparent);}
+        .sc-num{font-family:var(--mono);font-size:1.8rem;font-weight:700;color:#fff;line-height:1;margin-bottom:.25rem;}
+        .sc-label{font-family:var(--mono);font-size:.58rem;color:var(--muted);text-transform:uppercase;letter-spacing:2px;}
+        .sc-icon{position:absolute;right:1rem;top:50%;transform:translateY(-50%);font-size:1.6rem;opacity:.08;}
+
+        /* TABLE */
+        .toolbar{display:flex;align-items:center;gap:.7rem;margin-bottom:.9rem;flex-wrap:wrap;}
+        .search-box{display:flex;align-items:center;gap:.45rem;background:var(--bg3);border:1px solid var(--border);border-radius:3px;padding:.45rem .8rem;max-width:380px;}
+        .search-box i{color:var(--muted);font-size:.78rem;}
+        .search-box input{background:transparent;border:none;outline:none;color:var(--text);font-family:var(--mono);font-size:.78rem;width:240px;}
+        .search-box input::placeholder{color:var(--muted2);}
+        .filter-select{background:var(--bg3);border:1px solid var(--border);color:var(--muted);padding:.4rem .7rem;border-radius:3px;font-family:var(--mono);font-size:.72rem;outline:none;cursor:pointer;}
+        .filter-select:focus{border-color:rgba(248,113,113,.3);color:var(--text);}
+        .match-count{font-family:var(--mono);font-size:.65rem;color:var(--muted);}
+
+        .section-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:.85rem;}
+        .section-title{font-family:var(--mono);font-size:.78rem;font-weight:700;color:var(--text);display:flex;align-items:center;gap:.45rem;}
+        .section-count{font-family:var(--mono);font-size:.65rem;color:var(--muted);}
+
+        .tcard{background:var(--bg2);border:1px solid var(--border);border-radius:3px;overflow:hidden;}
+        table.atable{width:100%;border-collapse:collapse;table-layout:fixed;}
+        table.atable th{padding:.55rem 1rem;text-align:left;font-family:var(--mono);font-size:.56rem;font-weight:600;color:rgba(248,113,113,.4);text-transform:uppercase;letter-spacing:2px;border-bottom:1px solid var(--border);background:rgba(248,113,113,.03);white-space:nowrap;}
+        table.atable td{padding:.75rem 1rem;font-family:var(--mono);font-size:.74rem;border-bottom:1px solid rgba(248,113,113,.05);vertical-align:middle;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+        table.atable tr:last-child td{border-bottom:none;}
+        table.atable tbody tr{transition:background .12s;}
+        table.atable tbody tr:hover{background:rgba(248,113,113,.03);}
+        table.atable th:nth-child(1),table.atable td:nth-child(1){width:28%;}
+        table.atable th:nth-child(2),table.atable td:nth-child(2){width:20%;}
+        table.atable th:nth-child(3),table.atable td:nth-child(3){width:12%;}
+        table.atable th:nth-child(4),table.atable td:nth-child(4){width:14%;}
+        table.atable th:nth-child(5),table.atable td:nth-child(5){width:9%;}
+        table.atable th:nth-child(6),table.atable td:nth-child(6){width:17%;overflow:visible;}
+
+        .ficon{width:26px;height:26px;border-radius:3px;display:flex;align-items:center;justify-content:center;font-size:.7rem;flex-shrink:0;background:rgba(99,102,241,.1);border:1px solid rgba(99,102,241,.15);}
+        .fname-cell{display:flex;align-items:center;gap:.55rem;}
+        .fname{font-size:.75rem;color:#fff;font-weight:500;}
+        .fmeta{font-size:.6rem;color:var(--muted);}
+
+        /* OWNER CHIP — clickable */
+        .owner-chip{display:inline-flex;align-items:center;gap:.35rem;background:var(--bg3);border:1px solid var(--border);border-radius:2px;padding:.15rem .5rem;text-decoration:none;transition:all .15s;max-width:100%;}
+        .owner-chip:hover{border-color:rgba(248,113,113,.35);background:rgba(248,113,113,.06);}
+        .owner-av{width:18px;height:18px;border-radius:2px;background:linear-gradient(135deg,#1e1b4b,#312e81);display:flex;align-items:center;justify-content:center;font-size:.55rem;font-weight:700;color:#fff;flex-shrink:0;}
+        .owner-name{font-family:var(--mono);font-size:.65rem;color:var(--text);overflow:hidden;text-overflow:ellipsis;}
+
+        .spill{font-family:var(--mono);font-size:.58rem;font-weight:700;padding:.1rem .45rem;border-radius:2px;text-transform:uppercase;letter-spacing:.5px;}
+        .sp-ready{background:rgba(52,211,153,.08);color:var(--green);border:1px solid rgba(52,211,153,.2);}
+        .sp-uploading{background:rgba(251,191,36,.08);color:var(--yellow);border:1px solid rgba(251,191,36,.2);}
+
+        .abtn{background:var(--bg3);border:1px solid rgba(248,113,113,.15);color:var(--muted);padding:.22rem .5rem;border-radius:2px;font-size:.66rem;font-family:var(--mono);cursor:pointer;display:inline-flex;align-items:center;gap:.22rem;transition:all .12s;white-space:nowrap;text-decoration:none;}
+        .abtn:hover{color:var(--text);}
+
+        .empty-state{text-align:center;padding:3rem 1rem;}
+        .empty-state i{font-size:2rem;color:var(--muted2);display:block;margin-bottom:.8rem;}
+        .empty-state p{font-family:var(--mono);font-size:.75rem;color:var(--muted);}
+
+        @media(max-width:900px){.stats-row{grid-template-columns:1fr 1fr}}
+        @media(max-width:700px){.sidebar{display:none}.main{padding:1rem}}
+        @media(max-width:580px){.stats-row{grid-template-columns:1fr}}
+    </style>
+</head>
+<body>
+
+<!-- TOPBAR -->
+<header class="topbar">
+    <div style="display:flex;align-items:center;gap:.8rem">
+        <a href="/admin" class="brand">
+            <div class="brand-icon"><i class="bi bi-shield-fill-check"></i></div>
+            <span class="brand-text">VAULT<span>HUB</span></span>
+        </a>
+        <span class="admin-tag">root</span>
+    </div>
+    <div class="topbar-right">
+        <div class="sys-status"><span class="sys-dot"></span> system online</div>
+        <div class="admin-chip">
+            <div class="admin-av">
+                <img th:if="${adminProfilePhoto != null and !adminProfilePhoto.isEmpty()}" th:src="${adminProfilePhoto}" style="width:100%;height:100%;object-fit:cover;border-radius:3px;" alt="admin"/>
+                <span th:if="${adminProfilePhoto == null or adminProfilePhoto.isEmpty()}" th:text="${adminInitial}">H</span>
+            </div>
+            <span class="admin-name" th:text="${adminName}">Admin</span>
+        </div>
+        <a href="/logout" class="logout-btn"><i class="bi bi-power"></i> logout</a>
+    </div>
+</header>
+
+<div class="layout">
+    <!-- SIDEBAR -->
+    <aside class="sidebar">
+        <div class="sb-section">
+            <div class="sb-label">// control</div>
+            <a href="/admin" class="sb-item"><i class="bi bi-people-fill"></i> Users</a>
+            <a href="/admin/files" class="sb-item active">
+                <i class="bi bi-folder2-open"></i> All Files
+                <span class="sb-badge" th:text="${fileCount}">0</span>
+            </a>
+        </div>
+        <div class="sb-section">
+            <div class="sb-label">// system</div>
+            <a href="/logout" class="sb-item"><i class="bi bi-power"></i> Logout</a>
+        </div>
+        <div class="sb-footer">
+            <div class="sb-footer-text">
+                vaulthub-admin<br/>
+                session: active<br/>
+                <span style="color:rgba(248,113,113,.4)" th:text="${adminName}">harshad</span>@root
+            </div>
+        </div>
+    </aside>
+
+    <!-- MAIN -->
+    <main class="main">
+
+        <!-- BREADCRUMB -->
+        <div class="breadcrumb-bar">
+            <a href="/admin"><i class="bi bi-shield-fill-check"></i> admin</a>
+            <span class="sep">/</span>
+            <span class="cur">all-files</span>
+        </div>
+
+        <!-- STATS -->
+        <div class="stats-row">
+            <div class="stat-card sc1">
+                <div class="sc-num" th:text="${fileCount}">0</div>
+                <div class="sc-label">total files</div>
+                <div class="sc-icon"><i class="bi bi-files"></i></div>
+            </div>
+            <div class="stat-card sc2">
+                <div class="sc-num" th:text="${storageMB} + ' MB'">0 MB</div>
+                <div class="sc-label">total storage</div>
+                <div class="sc-icon"><i class="bi bi-hdd-fill"></i></div>
+            </div>
+            <div class="stat-card sc3">
+                <div class="sc-num" th:text="${totalBytes}">0</div>
+                <div class="sc-label">bytes on disk</div>
+                <div class="sc-icon"><i class="bi bi-bar-chart-fill"></i></div>
+            </div>
+        </div>
+
+        <!-- TOOLBAR -->
+        <div class="toolbar">
+            <div class="search-box">
+                <i class="bi bi-search"></i>
+                <input type="text" id="fileSearch" placeholder="search by filename or owner..." oninput="applyFilters()"/>
+            </div>
+            <select class="filter-select" id="statusFilter" onchange="applyFilters()">
+                <option value="">all status</option>
+                <option value="READY">READY</option>
+                <option value="UPLOADING">UPLOADING</option>
+            </select>
+            <span class="match-count" id="matchCount"></span>
+        </div>
+
+        <!-- TABLE -->
+        <div class="section-head">
+            <div class="section-title"><span style="color:var(--red)">//</span> file registry</div>
+            <span class="section-count" th:text="${fileCount} + ' entries'">0 entries</span>
+        </div>
+
+        <div class="tcard" th:if="${fileCount > 0}">
+            <div style="overflow-x:auto">
+                <table class="atable" id="fileTable">
+                    <thead><tr>
+                        <th>filename</th>
+                        <th>owner</th>
+                        <th>size</th>
+                        <th>uploaded</th>
+                        <th>status</th>
+                        <th>actions</th>
+                    </tr></thead>
+                    <tbody>
+                    <tr th:each="f : ${files}"
+                        th:data-name="${f.fileName}"
+                        th:data-owner="${f.ownerName}"
+                        th:data-status="${f.status}">
+
+                        <td>
+                            <div class="fname-cell">
+                                <div class="ficon"><i class="bi bi-file-earmark-fill" style="color:#818cf8"></i></div>
+                                <div>
+                                    <div class="fname" th:text="${f.fileName}">file.pdf</div>
+                                    <div class="fmeta" th:text="${f.mimeType}">type</div>
+                                </div>
+                            </div>
+                        </td>
+
+                        <td>
+                            <a th:href="@{/admin/users/}+${f.ownerDbId}" class="owner-chip">
+                                <div class="owner-av" th:text="${f.ownerName.substring(0,1).toUpperCase()}">U</div>
+                                <span class="owner-name" th:text="${f.ownerName}">User</span>
+                            </a>
+                        </td>
+
+                        <td style="font-size:.72rem" th:text="${f.sizeMB}">0 MB</td>
+
+                        <td class="file-date" th:data-date="${f.createdAt}" th:text="${f.createdAt}" style="font-size:.68rem;color:var(--muted)">—</td>
+
+                        <td>
+                            <span class="spill"
+                                  th:classappend="${f.status == 'READY'} ? 'sp-ready' : 'sp-uploading'"
+                                  th:text="${f.status}">READY</span>
+                        </td>
+
+                        <td>
+                            <div style="display:flex;gap:.3rem">
+                                <a th:href="@{/admin/files/view/}+${f.fileUuid}" target="_blank" class="abtn">
+                                    <i class="bi bi-eye"></i> view
+                                </a>
+                                <a th:href="@{/files/download/}+${f.fileUuid}" class="abtn">
+                                    <i class="bi bi-download"></i>
+                                </a>
+                            </div>
+                        </td>
+                    </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <div class="tcard empty-state" th:if="${fileCount == 0}">
+            <i class="bi bi-folder2"></i>
+            <p>no files in the system yet</p>
+        </div>
+
+    </main>
+</div>
+
+<script>
+// Format dates
+document.querySelectorAll('.file-date').forEach(el => {
+    const raw = el.getAttribute('data-date');
+    if (!raw || raw === '—') return;
+    try {
+        el.textContent = new Date(raw).toLocaleDateString('en-GB', {
+            day:'2-digit', month:'short', year:'numeric'
+        });
+    } catch(e) {}
+});
+
+// Search + filter
+function applyFilters() {
+    const q      = (document.getElementById('fileSearch').value || '').toLowerCase();
+    const status = (document.getElementById('statusFilter').value || '').toUpperCase();
+    let vis = 0, total = 0;
+    document.querySelectorAll('#fileTable tbody tr').forEach(row => {
+        total++;
+        const nameMatch  = (row.dataset.name  || '').toLowerCase().includes(q)
+                        || (row.dataset.owner || '').toLowerCase().includes(q);
+        const statMatch  = !status || (row.dataset.status || '') === status;
+        const show = nameMatch && statMatch;
+        row.style.display = show ? '' : 'none';
+        if (show) vis++;
+    });
+    const mc = document.getElementById('matchCount');
+    if (mc) mc.textContent = (q || status) ? `${vis}/${total} matched` : '';
+}
+</script>
+</body>
+</html>

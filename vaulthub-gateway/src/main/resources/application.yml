@@ -1,0 +1,106 @@
+server:
+  port: 8080
+
+spring:
+  application:
+    name: vaulthub-gateway
+
+  cloud:
+    gateway:
+      # 🧠 Forward real host/port to all backend services
+      #    Without this, Auth redirects to localhost:8081 instead of 8080
+      x-forwarded:
+        enabled: true
+        for-enabled: true
+        host-enabled: true
+        port-enabled: true
+        proto-enabled: true
+        prefix-enabled: true
+
+      default-filters:
+        - DedupeResponseHeader=Access-Control-Allow-Credentials Access-Control-Allow-Origin
+
+      routes:
+
+        # ─────────────────────────────────────────
+        # AUTH SERVICE (port 8081)
+        # ─────────────────────────────────────────
+        - id: auth-dashboard
+          uri: http://localhost:8081
+          predicates:
+            - Path=/dashboard, /dashboard/**
+          filters:
+            - RewritePath=/dashboard(?<segment>.*), /dashboard${segment}
+
+        - id: auth-settings
+          uri: http://localhost:8081
+          predicates:
+            - Path=/settings, /settings/**
+
+        - id: admin-file-view
+          uri: http://localhost:8082
+          predicates:
+            - Path=/admin/files, /admin/files/**
+
+        - id: auth-admin
+          uri: http://localhost:8081
+          predicates:
+            - Path=/admin, /admin/**, /admin-login
+
+        - id: auth-login
+          uri: http://localhost:8081
+          predicates:
+            - Path=/login, /logout, /register, /forgot-password, /forgot-password/**
+
+        - id: auth-home
+          uri: http://localhost:8081
+          predicates:
+            - Path=/
+
+        - id: auth-static
+          uri: http://localhost:8081
+          predicates:
+            - Path=/css/**, /js/**, /images/**, /webjars/**
+
+        # ─────────────────────────────────────────
+        # CHAT SERVICE (port 8083)
+        # ─────────────────────────────────────────
+        - id: chat-service
+          uri: http://localhost:8083
+          predicates:
+            - Path=/chat, /chat/**
+
+        - id: chat-websocket
+          uri: http://localhost:8083
+          predicates:
+            - Path=/ws/**
+
+        # ─────────────────────────────────────────
+        # FILE SERVICE (port 8082)
+        # ─────────────────────────────────────────
+        - id: file-service
+          uri: http://localhost:8082
+          predicates:
+            - Path=/files, /files/**
+
+        - id: file-activity
+          uri: http://localhost:8082
+          predicates:
+            - Path=/activity, /activity/**
+
+        # ─────────────────────────────────────────
+        # FILE SERVICE — internal share API
+        # Called by browser JS (share modal lookup)
+        # ─────────────────────────────────────────
+        - id: file-share-api
+          uri: http://localhost:8082
+          predicates:
+            - Path=/api/share/**
+
+eureka:
+  client:
+    enabled: false
+    register-with-eureka: false
+    fetch-registry: false
+
+

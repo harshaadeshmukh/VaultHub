@@ -1,0 +1,642 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8"/>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+    <title>Shared Files — VaultHub</title>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet"/>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet"/>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css" rel="stylesheet"/>
+    <style>
+
+        /* ── FLUID TYPOGRAPHY SCALE ──────────────────────────────
+           Root font-size scales 13px→16px across 360px→1280px.
+           Every rem unit scales automatically. ── */
+        html { font-size: clamp(13px, 0.8rem + 0.8vw, 16px); }
+        @media(max-width:480px) {
+            .page-header h4,.ph-title { font-size: clamp(1rem, 4vw, 1.2rem) !important; }
+            .sp-val,.sc-val,.as-val,.mobile-stat-val { font-size: clamp(.9rem, 3.5vw, 1.2rem) !important; }
+            .fname,.fcard-name,.log-action { font-size: clamp(.78rem, 3.2vw, .88rem) !important; }
+            .fmeta,.fcard-size,.log-file,.log-time { font-size: clamp(.62rem, 2.5vw, .72rem) !important; }
+            .nav-label,.sp-lbl,.sc-lbl,.as-lbl { font-size: clamp(.5rem, 2vw, .6rem) !important; }
+            .bnav a { font-size: clamp(.48rem, 1.8vw, .54rem) !important; }
+            .act-btn,.sheet-btn { font-size: clamp(.74rem, 3vw, .84rem) !important; }
+            .modal-title { font-size: clamp(.85rem, 3.5vw, .95rem) !important; }
+            .chat-header-info .name { font-size: clamp(.8rem, 3.5vw, .9rem) !important; }
+            .msg-bubble { font-size: clamp(.78rem, 3.2vw, .85rem) !important; }
+        }
+        /* ── FLUID TYPOGRAPHY SCALE ─────────────────────────────
+           Root font-size scales from 13px (360px screen)
+           to 16px (1280px screen) using clamp + viewport units.
+           Every rem unit in the app scales automatically.
+           ──────────────────────────────────────────────────── */
+        
+
+        /* Fine-tune specific text roles at small screens */
+        @media(max-width:480px) {
+            .page-header h4, .ph-title { font-size: clamp(1rem, 4vw, 1.2rem) !important; }
+            .sp-val, .sc-val, .as-val, .mobile-stat-val { font-size: clamp(.9rem, 3.5vw, 1.2rem) !important; }
+            .fname, .fcard-name, .log-action { font-size: clamp(.78rem, 3.2vw, .88rem) !important; }
+            .fmeta, .fcard-size, .log-file, .log-time { font-size: clamp(.62rem, 2.5vw, .72rem) !important; }
+            .nav-label, .sp-lbl, .sc-lbl, .as-lbl { font-size: clamp(.5rem, 2vw, .6rem) !important; }
+            .bnav a { font-size: clamp(.48rem, 1.8vw, .54rem) !important; }
+            .act-btn, .sheet-btn { font-size: clamp(.74rem, 3vw, .84rem) !important; }
+            .modal-title { font-size: clamp(.85rem, 3.5vw, .95rem) !important; }
+            .chat-header-info .name { font-size: clamp(.8rem, 3.5vw, .9rem) !important; }
+            .msg-bubble { font-size: clamp(.78rem, 3.2vw, .85rem) !important; }
+        }
+
+        :root {
+            --bg:#080810; --bg2:#0e0e1a; --bg3:#13131f; --bg4:#1a1a2e;
+            --border:#1e1e32; --border2:#252540;
+            --accent:#6366f1; --accent2:#818cf8; --accent3:#a5b4fc;
+            --cyan:#22d3ee; --green:#34d399; --yellow:#fbbf24; --red:#f87171;
+            --text:#e8e8f5; --muted:#52526e; --muted2:#3a3a55;
+            --font:'Plus Jakarta Sans',sans-serif; --mono:'JetBrains Mono',monospace;
+        }
+        * { margin:0; padding:0; box-sizing:border-box; }
+        body{font-family:var(--font);background:var(--bg);color:var(--text);height:100vh;overflow:hidden;}
+        body::before { content:''; position:fixed; inset:0; pointer-events:none; z-index:0;
+            background: radial-gradient(ellipse 600px 400px at 20% 10%, rgba(99,102,241,0.06) 0%, transparent 70%),
+                        radial-gradient(ellipse 400px 400px at 80% 80%, rgba(34,211,238,0.04) 0%, transparent 70%); }
+
+        /* ── TOPBAR ── */
+        .topbar { position:sticky; top:0; z-index:100; background:rgba(8,8,16,0.92); backdrop-filter:blur(16px); border-bottom:1px solid var(--border); padding:0 1.5rem; height:52px; display:flex; align-items:center; justify-content:space-between; }
+        .brand { font-size:1.05rem; font-weight:800; letter-spacing:-0.3px; text-decoration:none; display:flex; align-items:center; gap:0.4rem; }
+        .brand-text { color:var(--accent3); } .brand-text span { color:#fff; }
+        .topbar-right { display:flex; align-items:center; gap:0.6rem; }
+        .user-pill { display:flex; align-items:center; gap:0.5rem; background:var(--bg3); border:1px solid var(--border2); border-radius:24px; padding:0.22rem 0.8rem 0.22rem 0.28rem; }
+        .av { width:26px; height:26px; border-radius:50%; background:linear-gradient(135deg,var(--accent),var(--cyan)); display:flex; align-items:center; justify-content:center; font-size:0.7rem; font-weight:800; color:#fff; flex-shrink:0; }
+        .av-name { font-size:0.78rem; font-weight:600; }
+        .logout-btn { background:transparent; border:1px solid var(--border2); color:var(--muted); padding:0.25rem 0.65rem; border-radius:7px; font-size:0.74rem; font-family:var(--font); text-decoration:none; display:flex; align-items:center; gap:0.28rem; transition:all 0.2s; }
+        .logout-btn:hover { border-color:var(--red); color:var(--red); }
+
+        /* ── LAYOUT ── */
+        .layout{display:flex;height:calc(100vh - 52px);position:relative;z-index:1;overflow:hidden;}
+
+        /* ── SIDEBAR ── */
+        .sidebar{width:210px;flex-shrink:0;background:var(--bg2);border-right:1px solid var(--border);padding:1.2rem .7rem;display:flex;flex-direction:column;height:100%;overflow-y:auto;}
+        .nav-section { margin-bottom:0.3rem; }
+        .nav-label { font-size:0.55rem; font-weight:700; letter-spacing:2px; text-transform:uppercase; color:var(--muted2); padding:0.6rem 0.6rem 0.3rem; }
+        .nav-item { display:flex; align-items:center; gap:0.6rem; padding:0.48rem 0.65rem; border-radius:8px; text-decoration:none; color:var(--muted); font-size:0.8rem; font-weight:500; transition:all 0.15s; margin-bottom:1px; }
+        .nav-item:hover { background:var(--bg3); color:var(--text); }
+        .nav-item.active { background:rgba(99,102,241,0.12); color:var(--accent3); border-left:2px solid var(--accent); padding-left:calc(0.65rem - 2px); }
+        .nav-item i { font-size:0.85rem; width:16px; text-align:center; flex-shrink:0; }
+        .nav-badge { margin-left:auto; font-size:0.58rem; font-family:var(--mono); background:var(--bg4); color:var(--muted2); padding:0.06rem 0.38rem; border-radius:6px; }
+        .nav-item.active .nav-badge { background:rgba(99,102,241,0.15); color:var(--accent2); }
+        .sidebar-footer { margin-top:auto; padding-top:1rem; border-top:1px solid var(--border); }
+        .sf-text { font-size:0.62rem; color:var(--muted2); text-align:center; line-height:1.6; font-family:var(--mono); }
+
+        /* ── MAIN ── */
+        .main{flex:1;padding:1.5rem;overflow-y:auto;height:100%;}
+        .page-head { display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:0.8rem; margin-bottom:1.3rem; }
+        .page-head h4 { font-size:1.15rem; font-weight:800; color:#fff; letter-spacing:-0.3px; margin:0; }
+        .page-head p { font-size:0.76rem; color:var(--muted); margin:0.15rem 0 0; }
+
+        /* ── ALERTS ── */
+        .alert-ok  { background:rgba(52,211,153,0.08); border:1px solid rgba(52,211,153,0.2); color:#6ee7b7; border-radius:9px; padding:0.7rem 1rem; font-size:0.81rem; display:flex; align-items:center; gap:0.5rem; margin-bottom:1rem; }
+        .alert-err { background:rgba(248,113,113,0.08); border:1px solid rgba(248,113,113,0.2); color:#fca5a5; border-radius:9px; padding:0.7rem 1rem; font-size:0.81rem; display:flex; align-items:center; gap:0.5rem; margin-bottom:1rem; }
+
+        /* ── STAT STRIP ── */
+        .stat-strip { display:flex; gap:0.8rem; margin-bottom:1.2rem; flex-wrap:wrap; }
+        .stat-pill { background:var(--bg2); border:1px solid var(--border); border-radius:10px; padding:0.75rem 1rem; display:flex; align-items:center; gap:0.6rem; flex:1; min-width:130px; }
+        .sp-icon { width:32px; height:32px; border-radius:8px; display:flex; align-items:center; justify-content:center; font-size:0.88rem; flex-shrink:0; }
+        .sp-val { font-size:1.15rem; font-weight:800; color:#fff; line-height:1; font-family:var(--mono); }
+        .sp-lbl { font-size:0.6rem; font-weight:700; color:var(--muted); text-transform:uppercase; letter-spacing:1px; margin-top:2px; }
+
+        /* ── TABS ── */
+        .tabs { display:flex; border-bottom:1px solid var(--border); margin-bottom:1.3rem; }
+        .tab-btn { background:transparent; border:none; border-bottom:2px solid transparent; color:var(--muted); padding:0.65rem 1.2rem; font-size:0.84rem; font-weight:700; font-family:var(--font); cursor:pointer; transition:all 0.15s; display:flex; align-items:center; gap:0.45rem; margin-bottom:-1px; }
+        .tab-btn.active { color:var(--accent2); border-bottom-color:var(--accent); }
+        .tab-btn:hover { color:var(--text); }
+        .tab-badge { font-size:0.62rem; background:rgba(99,102,241,0.15); color:var(--accent2); padding:0.1rem 0.42rem; border-radius:10px; font-family:var(--mono); }
+        .tab-content { display:none; }
+        .tab-content.active { display:block; }
+
+        /* ── FILE PANEL (same as files.html) ── */
+        .file-panel { background:var(--bg2); border:1px solid var(--border); border-radius:12px; overflow:hidden; }
+        .file-panel-head { padding:0.85rem 1.1rem; border-bottom:1px solid var(--border); display:flex; align-items:center; justify-content:space-between; }
+        .fp-title { font-size:0.82rem; font-weight:700; color:var(--text); display:flex; align-items:center; gap:0.45rem; }
+        .live-dot { width:7px; height:7px; border-radius:50%; background:var(--cyan); box-shadow:0 0 6px var(--cyan); display:inline-block; animation:pulse 2s infinite; }
+        @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.4} }
+
+        /* ── TABLE ── */
+        .ftable { width:100%; border-collapse:collapse; }
+        .ftable th { padding:0.6rem 1rem; text-align:left; font-size:0.6rem; font-weight:700; color:var(--muted2); text-transform:uppercase; letter-spacing:1.5px; border-bottom:1px solid var(--border); background:var(--bg3); }
+        .ftable td { padding:0.8rem 1rem; font-size:0.82rem; color:var(--text); border-bottom:1px solid rgba(30,30,50,0.6); vertical-align:middle; }
+        .ftable tr:last-child td { border-bottom:none; }
+        .ftable tbody tr { transition:background 0.15s; }
+        .ftable tbody tr:hover { background:rgba(99,102,241,0.04); }
+        .file-icon { width:34px; height:34px; border-radius:9px; display:flex; align-items:center; justify-content:center; font-size:1rem; flex-shrink:0; }
+        .fname { font-size:0.84rem; font-weight:600; color:#fff; }
+        .fmeta { font-size:0.67rem; color:var(--muted); font-family:var(--mono); margin-top:2px; }
+
+        /* ── PERSON CHIP ── */
+        .person-chip { display:inline-flex; align-items:center; gap:0.4rem; background:var(--bg3); border:1px solid var(--border2); border-radius:20px; padding:0.2rem 0.6rem 0.2rem 0.25rem; }
+        .person-av { width:20px; height:20px; border-radius:50%; display:flex; align-items:center; justify-content:center; font-size:0.6rem; font-weight:800; color:#fff; flex-shrink:0; }
+        .person-name { font-size:0.72rem; font-weight:600; color:var(--text); }
+
+        /* ── BADGES ── */
+        .badge-active  { display:inline-flex; align-items:center; gap:0.22rem; background:rgba(52,211,153,0.1);  border:1px solid rgba(52,211,153,0.22);  color:var(--green); font-size:0.6rem; font-family:var(--mono); padding:0.1rem 0.45rem; border-radius:20px; }
+        .badge-revoked { background:rgba(248,113,113,0.1); border-color:rgba(248,113,113,0.22); color:var(--red); }
+
+        /* ── ACTION BUTTONS ── */
+        .act-btn { background:var(--bg3); border:1px solid var(--border2); color:var(--muted); padding:0.28rem 0.6rem; border-radius:7px; font-size:0.73rem; font-family:var(--font); text-decoration:none; cursor:pointer; display:inline-flex; align-items:center; gap:0.28rem; transition:all 0.15s; }
+        .act-btn:hover { color:var(--text); }
+        .act-btn.view:hover   { color:var(--accent3); border-color:var(--accent); }
+        .act-btn.dl:hover     { color:var(--green);   border-color:var(--green); }
+        .act-btn.revoke:hover { color:var(--red);     border-color:var(--red); }
+
+        /* ── EMPTY STATE ── */
+        .empty { text-align:center; padding:3.5rem 1rem; }
+        .eicon { width:56px; height:56px; background:var(--bg3); border:1px solid var(--border2); border-radius:14px; display:flex; align-items:center; justify-content:center; font-size:1.4rem; margin:0 auto 1rem; }
+        .empty h5 { font-size:0.95rem; font-weight:700; color:#fff; margin-bottom:0.35rem; }
+        .empty p { font-size:0.78rem; color:var(--muted); line-height:1.7; margin-bottom:1.2rem; }
+        .empty a { background:var(--accent); color:#fff; border:none; border-radius:8px; padding:0.5rem 1.2rem; font-size:0.8rem; font-weight:700; font-family:var(--font); text-decoration:none; display:inline-flex; align-items:center; gap:0.38rem; box-shadow:0 2px 16px rgba(99,102,241,0.35); transition:all 0.2s; }
+        .empty a:hover { background:#5254cc; }
+
+        /* ── MOBILE CARDS ── */
+        .file-cards { display:none; padding:0.75rem; }
+        .fcard { background:var(--bg3); border:1px solid var(--border); border-radius:10px; padding:0.9rem; margin-bottom:0.65rem; }
+        .fcard:last-child { margin-bottom:0; }
+        .fcard-head { display:flex; align-items:center; gap:0.6rem; margin-bottom:0.65rem; }
+        .fcard-meta { display:flex; align-items:center; gap:0.5rem; flex-wrap:wrap; margin-bottom:0.6rem; }
+        .fcard-actions { display:flex; gap:0.4rem; flex-wrap:wrap; }
+
+        /* ── BOTTOM NAV ── */
+        .bnav { display:none; position:fixed; bottom:0; left:0; right:0; background:rgba(8,8,16,0.97); border-top:1px solid var(--border); backdrop-filter:blur(12px); padding:0.4rem 0 env(safe-area-inset-bottom,0.2rem); z-index:200; }
+        .bnav a { flex:1; display:flex; flex-direction:column; align-items:center; gap:0.1rem; text-decoration:none; color:var(--muted2); font-size:0.52rem; font-weight:700; letter-spacing:0.5px; text-transform:uppercase; transition:color 0.2s; padding:0.2rem 0; }
+        .bnav a i { font-size:1.1rem; }
+        .bnav a.active, .bnav a:hover { color:var(--accent3); }
+
+        @media(max-width:768px){.sidebar{display:none;}.main{padding:.85rem;padding-bottom:74px;}.bnav{display:flex;}.ftable-wrap{display:none;}.file-cards{display:block;}}
+        @media (max-width:580px) { .topbar{padding:0 1rem} .av-name{display:none} }
+
+        /* REVOKE TOAST */
+        .revoke-toast{position:fixed;bottom:72px;left:50%;transform:translateX(-50%);background:var(--bg2);border:1px solid rgba(248,113,113,.35);color:var(--red);border-radius:10px;padding:.55rem 1.1rem;font-size:.8rem;font-weight:600;z-index:9999;display:none;align-items:center;gap:.5rem;box-shadow:0 4px 20px rgba(0,0,0,.4);animation:toastIn .25s ease;}
+        .revoke-ok-toast{border-color:rgba(52,211,153,.35)!important;color:var(--green)!important;}
+        @keyframes toastIn{from{opacity:0;transform:translateX(-50%) translateY(8px)}to{opacity:1;transform:translateX(-50%) translateY(0)}}
+    </style>
+</head>
+<body>
+
+<header class="topbar">
+    <a href="/dashboard" class="brand">
+        <span class="brand-icon">🗂️</span>
+        <span class="brand-text">Vault<span>Hub</span></span>
+    </a>
+    <div class="topbar-right">
+        <div class="user-pill">
+            <div class="av" style="overflow:hidden;padding:0;">
+                <img th:if="${profilePhoto != null and !profilePhoto.isEmpty()}" th:src="${profilePhoto}" style="width:100%;height:100%;object-fit:cover;border-radius:50%;" alt="avatar"/>
+                <span th:if="${profilePhoto == null or profilePhoto.isEmpty()}" th:text="${#strings.substring(displayName,0,1).toUpperCase()}">H</span>
+            </div>
+            <span class="av-name" th:text="${displayName}">Harshad</span>
+        </div>
+        <a href="/logout" class="logout-btn">
+            <i class="bi bi-box-arrow-right"></i>
+            <span class="d-none d-sm-inline">Logout</span>
+        </a>
+    </div>
+</header>
+
+<div class="layout">
+    <aside class="sidebar">
+        <div class="nav-section">
+            <div class="nav-label">Main</div>
+            <a href="/dashboard" class="nav-item"><i class="bi bi-grid-1x2-fill"></i> Dashboard</a>
+            <a href="/files" class="nav-item"><i class="bi bi-folder2-open"></i> My Files</a>
+            <a href="/files/upload" class="nav-item"><i class="bi bi-cloud-upload"></i> Upload File</a>
+            <a href="/files/shared" class="nav-item active">
+                <i class="bi bi-share-fill"></i> Shared Files
+                <span class="nav-badge" th:text="${#lists.size(sharedWithMe)}">0</span>
+            </a>
+        </div>
+        <div class="nav-section">
+            <div class="nav-label">Vault</div>
+            <a href="/activity" class="nav-item"><i class="bi bi-activity"></i> Activity Log</a>
+            <a href="/chat" class="nav-item"><i class="bi bi-chat-dots-fill"></i> Chat</a>
+        </div>
+        <div class="nav-section">
+            <div class="nav-label">Account</div>
+            <a href="/settings" class="nav-item"><i class="bi bi-gear-fill"></i> Settings</a>
+        </div>
+        <div class="sidebar-footer">
+            <div class="sf-text">VaultHub · Secure Storage</div>
+        </div>
+    </aside>
+
+    <main class="main">
+
+        <div class="page-head">
+            <div>
+                <h4><i class="bi bi-share-fill" style="color:var(--accent2)"></i> Shared Files</h4>
+                <p>Files shared with you by other users</p>
+            </div>
+        </div>
+
+        <div class="alert-ok" id="successAlert" style="display:none">
+            <i class="bi bi-check-circle-fill"></i><span id="successMsg"></span>
+        </div>
+        <div class="alert-err" id="errorAlert" style="display:none">
+            <i class="bi bi-exclamation-circle-fill"></i><span id="errorMsg"></span>
+        </div>
+
+        <!-- ── STAT STRIP ── -->
+        <div class="stat-strip">
+            <div class="stat-pill">
+                <div class="sp-icon" style="background:rgba(34,211,238,0.08)"><i class="bi bi-arrow-down-left-circle-fill" style="color:var(--cyan)"></i></div>
+                <div>
+                    <div class="sp-val" th:text="${#lists.size(sharedWithMe)}">0</div>
+                    <div class="sp-lbl">Shared with me</div>
+                </div>
+            </div>
+            <div class="stat-pill">
+                <div class="sp-icon" style="background:rgba(99,102,241,0.08)"><i class="bi bi-arrow-up-right-circle-fill" style="color:var(--accent2)"></i></div>
+                <div>
+                    <div class="sp-val" th:text="${#lists.size(sharedByMe)}">0</div>
+                    <div class="sp-lbl">Shared by me</div>
+                </div>
+            </div>
+            <div class="stat-pill">
+                <div class="sp-icon" style="background:rgba(52,211,153,0.08)"><i class="bi bi-shield-lock-fill" style="color:var(--green)"></i></div>
+                <div><div class="sp-val">Vault</div><div class="sp-lbl">Members only</div></div>
+            </div>
+        </div>
+
+        <!-- ── TABS ── -->
+        <div class="tabs">
+            <button class="tab-btn active" onclick="switchTab('withMe', this)">
+                <i class="bi bi-arrow-down-left-circle"></i>
+                Shared with me
+                <span class="tab-badge" th:text="${#lists.size(sharedWithMe)}">0</span>
+            </button>
+            <button class="tab-btn" onclick="switchTab('byMe', this)">
+                <i class="bi bi-arrow-up-right-circle"></i>
+                Shared by me
+                <span class="tab-badge" th:text="${#lists.size(sharedByMe)}">0</span>
+            </button>
+        </div>
+
+        <!-- ════════════════════════════════════════
+             TAB 1 — FILES SHARED WITH ME
+             This is what the user asked for:
+             files shared by others, shown like the
+             My Files section — full table with
+             View + Download actions
+             ════════════════════════════════════════ -->
+        <div id="tab-withMe" class="tab-content active">
+            <div class="file-panel">
+                <div class="file-panel-head">
+                    <span class="fp-title">
+                        <span class="live-dot"></span>
+                        Files Shared With Me
+                    </span>
+                    <span style="font-size:0.7rem;color:var(--muted);font-family:var(--mono)"
+                          th:text="${#lists.size(sharedWithMe)} + ' files'">0 files</span>
+                </div>
+
+                <!-- Empty state -->
+                <div class="empty" th:if="${#lists.isEmpty(sharedWithMe)}">
+                    <div class="eicon"><i class="bi bi-inbox" style="color:var(--muted2)"></i></div>
+                    <h5>No files shared with you yet</h5>
+                    <p>When another user shares a file with your email,<br/>it will appear here. You can view and download it.</p>
+                    <a href="/files"><i class="bi bi-folder2-open"></i> Go to My Files</a>
+                </div>
+
+                <!-- ── DESKTOP TABLE ── -->
+                <div class="ftable-wrap" th:if="${!#lists.isEmpty(sharedWithMe)}">
+                    <table class="ftable">
+                        <thead>
+                        <tr>
+                            <th>File</th>
+                            <th class="d-none d-md-table-cell">Size</th>
+                            <th class="d-none d-lg-table-cell">Shared by</th>
+                            <th class="d-none d-lg-table-cell">Shared on</th>
+                            <th>Actions</th>
+                        </tr>
+                        </thead>
+                        <tbody>
+                        <!--
+                            sharedWithMe = List<SharedFileView>
+                            Each item has: fileUuid, fileName, fileSizeFormatted,
+                                           mimeType, ownerEmail, sharedAt
+                        -->
+                        <tr th:each="item : ${sharedWithMe}">
+                            <td>
+                                <div class="d-flex align-items-center gap-2">
+                                    <div class="file-icon" style="background:rgba(34,211,238,0.08)">
+                                        <i class="bi bi-file-earmark-fill" style="color:var(--cyan)"></i>
+                                    </div>
+                                    <div>
+                                        <div class="fname" th:text="${item.fileName}">file.pdf</div>
+                                        <div class="fmeta" th:text="${item.mimeType}">application/pdf</div>
+                                    </div>
+                                </div>
+                            </td>
+                            <td class="d-none d-md-table-cell"
+                                style="font-family:var(--mono);font-size:0.78rem"
+                                th:text="${item.fileSizeFormatted}">0 B</td>
+                            <td class="d-none d-lg-table-cell">
+                                <div class="person-chip">
+                                    <div class="person-av"
+                                         style="background:linear-gradient(135deg,var(--cyan),var(--accent2))"
+                                         th:text="${#strings.substring(item.ownerEmail,0,1).toUpperCase()}">A</div>
+                                    <span class="person-name" th:text="${item.ownerEmail}">owner@vault.com</span>
+                                </div>
+                            </td>
+                            <td class="d-none d-lg-table-cell"
+                                style="font-size:0.75rem;color:var(--muted)"
+                                th:text="${item.sharedAt}">—</td>
+                            <td>
+                                <div class="d-flex gap-1 flex-wrap">
+                                    <a th:href="@{/files/view/{uuid}(uuid=${item.fileUuid})}"
+                                       class="act-btn view">
+                                        <i class="bi bi-eye"></i> View
+                                    </a>
+                                    <a th:href="@{/files/download/{uuid}(uuid=${item.fileUuid})}"
+                                       class="act-btn dl">
+                                        <i class="bi bi-download"></i> Download
+                                    </a>
+                                </div>
+                            </td>
+                        </tr>
+                        </tbody>
+                    </table>
+                </div>
+
+                <!-- ── MOBILE CARDS ── -->
+                <div class="file-cards" th:if="${!#lists.isEmpty(sharedWithMe)}">
+                    <div class="fcard" th:each="item : ${sharedWithMe}">
+                        <div class="fcard-head">
+                            <div class="file-icon" style="background:rgba(34,211,238,0.08)">
+                                <i class="bi bi-file-earmark-fill" style="color:var(--cyan)"></i>
+                            </div>
+                            <div style="flex:1;min-width:0">
+                                <div class="fname" th:text="${item.fileName}" style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap">file.pdf</div>
+                                <div class="fmeta" th:text="${item.fileSizeFormatted}">0 B</div>
+                            </div>
+                        </div>
+                        <div class="fcard-meta">
+                            <div class="person-chip">
+                                <div class="person-av"
+                                     style="background:linear-gradient(135deg,var(--cyan),var(--accent2))"
+                                     th:text="${#strings.substring(item.ownerEmail,0,1).toUpperCase()}">A</div>
+                                <span class="person-name" th:text="${item.ownerEmail}">owner@vault.com</span>
+                            </div>
+                        </div>
+                        <div class="fcard-actions">
+                            <a th:href="@{/files/view/{uuid}(uuid=${item.fileUuid})}" class="act-btn view"><i class="bi bi-eye"></i> View</a>
+                            <a th:href="@{/files/download/{uuid}(uuid=${item.fileUuid})}" class="act-btn dl"><i class="bi bi-download"></i> Download</a>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+
+        <!-- ════════════════════════════════════════
+             TAB 2 — FILES I SHARED WITH OTHERS
+             Full table showing who you shared with,
+             status (ACTIVE / REVOKED), Revoke button
+             ════════════════════════════════════════ -->
+        <div id="tab-byMe" class="tab-content">
+            <div class="file-panel">
+                <div class="file-panel-head">
+                    <span class="fp-title">
+                        <span class="live-dot" style="background:var(--accent2);box-shadow:0 0 6px var(--accent2)"></span>
+                        Files I Shared
+                    </span>
+                    <span style="font-size:0.7rem;color:var(--muted);font-family:var(--mono)"
+                          th:text="${#lists.size(sharedByMe)} + ' shares'">0 shares</span>
+                </div>
+
+                <!-- Empty state -->
+                <div class="empty" th:if="${#lists.isEmpty(sharedByMe)}">
+                    <div class="eicon"><i class="bi bi-person-plus" style="color:var(--muted2)"></i></div>
+                    <h5>You haven't shared any files yet</h5>
+                    <p>Go to My Files, click the <strong style="color:var(--accent3)">Share</strong> button<br/>
+                        next to any file, and enter a user email.</p>
+                    <a href="/files"><i class="bi bi-folder2-open"></i> Go to My Files</a>
+                </div>
+
+                <!-- ── DESKTOP TABLE ── -->
+                <div class="ftable-wrap" th:if="${!#lists.isEmpty(sharedByMe)}">
+                    <table class="ftable">
+                        <thead>
+                        <tr>
+                            <th>File</th>
+                            <th class="d-none d-md-table-cell">Size</th>
+                            <th>Shared with</th>
+                            <th class="d-none d-lg-table-cell">Shared on</th>
+                            <th>Status</th>
+                            <th>Actions</th>
+                        </tr>
+                        </thead>
+                        <tbody>
+                        <!--
+                            sharedByMe = List<Map<String,Object>>
+                            Each map has:
+                              "share" → FileShare  (id, sharedWithName, sharedWithEmail, active, sharedAt)
+                              "file"  → FileResponse (fileUuid, fileName, fileSizeFormatted, mimeType)
+                        -->
+                        <tr th:each="entry : ${sharedByMe}"
+                            th:with="share=${entry['share']}, file=${entry['file']}">
+                            <td>
+                                <div class="d-flex align-items-center gap-2">
+                                    <div class="file-icon" style="background:rgba(99,102,241,0.1)">
+                                        <i class="bi bi-file-earmark-fill" style="color:var(--accent)"></i>
+                                    </div>
+                                    <div>
+                                        <div class="fname" th:text="${file.fileName}">file.pdf</div>
+                                        <div class="fmeta" th:text="${file.mimeType}">application/pdf</div>
+                                    </div>
+                                </div>
+                            </td>
+                            <td class="d-none d-md-table-cell"
+                                style="font-family:var(--mono);font-size:0.78rem"
+                                th:text="${file.fileSizeFormatted}">0 B</td>
+                            <td>
+                                <div class="d-flex flex-column gap-1">
+                                    <div class="person-chip" style="width:fit-content">
+                                        <div class="person-av"
+                                             style="background:linear-gradient(135deg,var(--accent),var(--accent2))"
+                                             th:text="${#strings.substring(share.sharedWithName,0,1).toUpperCase()}">H</div>
+                                        <span class="person-name" th:text="${share.sharedWithName}">User</span>
+                                    </div>
+                                    <span style="font-size:0.67rem;color:var(--muted);font-family:var(--mono)"
+                                          th:text="${share.sharedWithEmail}">user@vault.com</span>
+                                </div>
+                            </td>
+                            <td class="d-none d-lg-table-cell"
+                                style="font-size:0.75rem;color:var(--muted)"
+                                th:text="${share.sharedAt}">—</td>
+                            <td>
+                                <span class="badge-active" th:if="${share.active}">
+                                    <i class="bi bi-circle-fill" style="font-size:0.45rem"></i> ACTIVE
+                                </span>
+                                <span class="badge-active badge-revoked" th:unless="${share.active}">
+                                    <i class="bi bi-slash-circle" style="font-size:0.6rem"></i> REVOKED
+                                </span>
+                            </td>
+                            <td>
+                                <div class="d-flex gap-1 flex-wrap">
+                                    <a th:href="@{/files/view/{uuid}(uuid=${file.fileUuid})}"
+                                       class="act-btn view">
+                                        <i class="bi bi-eye"></i> View
+                                    </a>
+                                    <button th:if="${share.active}"
+                                            class="act-btn revoke"
+                                            th:data-share-id="${share.id}"
+                                            onclick="revokeShare(this)">
+                                        <i class="bi bi-slash-circle"></i> Revoke
+                                    </button>
+                                </div>
+                            </td>
+                        </tr>
+                        </tbody>
+                    </table>
+                </div>
+
+                <!-- ── MOBILE CARDS ── -->
+                <div class="file-cards" th:if="${!#lists.isEmpty(sharedByMe)}">
+                    <div class="fcard" th:each="entry : ${sharedByMe}"
+                         th:with="share=${entry['share']}, file=${entry['file']}">
+                        <div class="fcard-head">
+                            <div class="file-icon" style="background:rgba(99,102,241,0.1)">
+                                <i class="bi bi-file-earmark-fill" style="color:var(--accent)"></i>
+                            </div>
+                            <div style="flex:1;min-width:0">
+                                <div class="fname" th:text="${file.fileName}" style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap">file.pdf</div>
+                                <div class="fmeta" th:text="${file.fileSizeFormatted}">0 B</div>
+                            </div>
+                            <span class="badge-active" th:if="${share.active}">ACTIVE</span>
+                            <span class="badge-active badge-revoked" th:unless="${share.active}">REVOKED</span>
+                        </div>
+                        <div class="fcard-meta">
+                            <div class="person-chip">
+                                <div class="person-av"
+                                     style="background:linear-gradient(135deg,var(--accent),var(--accent2))"
+                                     th:text="${#strings.substring(share.sharedWithName,0,1).toUpperCase()}">H</div>
+                                <span class="person-name" th:text="${share.sharedWithName}">User</span>
+                            </div>
+                            <span style="font-size:0.67rem;color:var(--muted);font-family:var(--mono)"
+                                  th:text="${share.sharedWithEmail}">user@vault.com</span>
+                        </div>
+                        <div class="fcard-actions">
+                            <a th:href="@{/files/view/{uuid}(uuid=${file.fileUuid})}" class="act-btn view"><i class="bi bi-eye"></i> View</a>
+                            <button th:if="${share.active}"
+                                    class="act-btn revoke"
+                                    th:data-share-id="${share.id}"
+                                    onclick="revokeShare(this)">
+                                <i class="bi bi-slash-circle"></i> Revoke
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+
+    </main>
+</div>
+
+<nav class="bnav">
+    <a href="/dashboard"><i class="bi bi-grid-1x2-fill"></i>Home</a>
+    <a href="/files" class="active"><i class="bi bi-folder2-open"></i>Files</a>
+    <a href="/chat"><i class="bi bi-chat-dots-fill"></i>Chat</a>
+    <a href="/activity"><i class="bi bi-activity"></i>Activity</a>
+    <a href="/settings"><i class="bi bi-gear-fill"></i>Settings</a>
+</nav>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+<script>
+    // ── Alert auto-dismiss ────────────────────────────
+    (function () {
+        const p  = new URLSearchParams(window.location.search);
+        const sa = document.getElementById('successAlert');
+        const ea = document.getElementById('errorAlert');
+        if (p.get('success') === 'revoked')      { document.getElementById('successMsg').textContent = '🚫 Access revoked successfully.'; sa.style.display = 'flex'; }
+        if (p.get('error')   === 'revokefailed') { document.getElementById('errorMsg').textContent   = 'Could not revoke. Please try again.'; ea.style.display = 'flex'; }
+        if (sa.style.display === 'flex' || ea.style.display === 'flex')
+            setTimeout(() => { sa.style.display='none'; ea.style.display='none'; }, 4000);
+        if (p.toString()) window.history.replaceState({}, '', window.location.pathname);
+    })();
+
+    // ── Tab switching ─────────────────────────────────
+    function switchTab(id, btn) {
+        document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
+        document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+        document.getElementById('tab-' + id).classList.add('active');
+        btn.classList.add('active');
+    }
+
+    async function revokeShare(btn) {
+        const shareId = btn.dataset.shareId;
+        if (!shareId) return;
+
+        // ── Optimistic UI: instantly mark as revoked ──
+        btn.disabled = true;
+        btn.innerHTML = '<i class="bi bi-slash-circle"></i> Revoking…';
+        btn.style.opacity = '0.6';
+
+        // Find the parent row/card and fade it
+        const row  = btn.closest('tr') || btn.closest('.fcard');
+        if (row) {
+            row.style.transition = 'opacity .25s';
+            row.style.opacity = '0.45';
+        }
+
+        try {
+            const res  = await fetch(`/files/share/revoke/${shareId}`, { method: 'POST' });
+            const data = await res.json();
+
+            if (data.success) {
+                // Remove the row/card smoothly
+                if (row) {
+                    row.style.transition = 'opacity .3s, max-height .35s, padding .35s';
+                    row.style.opacity    = '0';
+                    row.style.maxHeight  = row.offsetHeight + 'px';
+                    setTimeout(() => {
+                        row.style.maxHeight = '0';
+                        row.style.padding   = '0';
+                        row.style.overflow  = 'hidden';
+                    }, 50);
+                    setTimeout(() => row.remove(), 400);
+                }
+                showToast('🚫 Access revoked', false);
+            } else {
+                // Rollback optimistic UI
+                if (row) row.style.opacity = '1';
+                btn.disabled = false;
+                btn.innerHTML = '<i class="bi bi-slash-circle"></i> Revoke';
+                btn.style.opacity = '1';
+                showToast('Could not revoke. Try again.', true);
+            }
+        } catch (e) {
+            // Network error — rollback
+            if (row) row.style.opacity = '1';
+            btn.disabled = false;
+            btn.innerHTML = '<i class="bi bi-slash-circle"></i> Revoke';
+            btn.style.opacity = '1';
+            showToast('Network error. Try again.', true);
+        }
+    }
+
+    function showToast(msg, isError) {
+        let t = document.getElementById('revokeToast');
+        if (!t) {
+            t = document.createElement('div');
+            t.id = 'revokeToast';
+            t.className = 'revoke-toast';
+            document.body.appendChild(t);
+        }
+        t.className = 'revoke-toast' + (isError ? '' : ' revoke-ok-toast');
+        t.innerHTML = msg;
+        t.style.display = 'flex';
+        clearTimeout(t._timer);
+        t._timer = setTimeout(() => { t.style.display = 'none'; }, 2500);
+    }
+</script>
+</body>
+</html>

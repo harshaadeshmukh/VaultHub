@@ -1,0 +1,156 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8"/>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+    <title>Admin Access — VaultHub</title>
+    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&family=Syne:wght@700;800&display=swap" rel="stylesheet"/>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css" rel="stylesheet"/>
+    <style>
+        :root{--bg:#05050a;--bg2:#0a0a12;--bg3:#0f0f18;--border:rgba(248,113,113,.12);--red:#f87171;--red2:#fca5a5;--red3:rgba(248,113,113,.08);--muted:#4a4a6a;--text:#e0e0f0;--mono:'JetBrains Mono',monospace;--syne:'Syne',sans-serif;}
+        *{margin:0;padding:0;box-sizing:border-box;}
+        html,body{height:100%;}
+        body{font-family:var(--mono);background:var(--bg);color:var(--text);display:flex;align-items:center;justify-content:center;min-height:100vh;overflow:hidden;position:relative;}
+
+        /* SCANLINES */
+        body::before{content:'';position:fixed;inset:0;background:repeating-linear-gradient(0deg,transparent,transparent 2px,rgba(0,0,0,.15) 2px,rgba(0,0,0,.15) 4px);pointer-events:none;z-index:0;}
+        /* RED GLOW */
+        body::after{content:'';position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);width:600px;height:600px;background:radial-gradient(ellipse,rgba(248,113,113,.06) 0%,transparent 70%);pointer-events:none;z-index:0;}
+
+        /* GRID BACKGROUND */
+        canvas#grid{position:fixed;inset:0;z-index:0;pointer-events:none;opacity:.4;}
+
+        /* MAIN TERMINAL */
+        .terminal{position:relative;z-index:10;width:100%;max-width:440px;margin:1rem;background:var(--bg2);border:1px solid rgba(248,113,113,.25);border-radius:4px;box-shadow:0 0 0 1px rgba(248,113,113,.06),0 40px 80px rgba(0,0,0,.8),0 0 60px rgba(248,113,113,.06);animation:termIn .4s ease both;}
+        @keyframes termIn{from{opacity:0;transform:scale(.97) translateY(10px)}to{opacity:1;transform:scale(1) translateY(0)}}
+
+        /* TITLE BAR */
+        .titlebar{background:rgba(248,113,113,.06);border-bottom:1px solid rgba(248,113,113,.15);padding:.6rem 1rem;display:flex;align-items:center;gap:.6rem;}
+        .tb-dots{display:flex;gap:.4rem;}
+        .tb-dot{width:10px;height:10px;border-radius:50%;}
+        .dot-r{background:#f87171;box-shadow:0 0 6px #f87171;animation:dotPulse 2s infinite;}
+        .dot-y{background:#4a4a2a;}.dot-g{background:#1a3a1a;}
+        @keyframes dotPulse{0%,100%{opacity:1}50%{opacity:.4}}
+        .tb-label{font-size:.68rem;color:rgba(248,113,113,.5);flex:1;text-align:center;letter-spacing:2px;text-transform:uppercase;}
+        .tb-back{font-size:.68rem;color:var(--muted);text-decoration:none;transition:color .2s;display:flex;align-items:center;gap:.25rem;}
+        .tb-back:hover{color:var(--red2);}
+
+        /* BODY */
+        .term-body{padding:1.8rem 1.8rem 1.5rem;}
+
+        /* HEADER */
+        .term-header{margin-bottom:1.6rem;}
+        .shield-icon{width:44px;height:44px;background:rgba(248,113,113,.1);border:1px solid rgba(248,113,113,.25);border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:1.15rem;margin-bottom:1rem;}
+        .term-title{font-family:var(--syne);font-size:1.2rem;font-weight:800;color:#fff;letter-spacing:-.5px;margin-bottom:.2rem;}
+        .term-sub{font-size:.68rem;color:var(--muted);letter-spacing:.5px;}
+
+        /* PROMPT LINE */
+        .prompt-line{font-size:.65rem;color:rgba(248,113,113,.4);margin-bottom:1.2rem;display:flex;align-items:center;gap:.4rem;}
+        .prompt-line::before{content:'';flex:1;height:1px;background:rgba(248,113,113,.1);}
+        .prompt-line::after{content:'';flex:1;height:1px;background:rgba(248,113,113,.1);}
+
+        /* ALERTS */
+        .alert-err{background:rgba(248,113,113,.07);border:1px solid rgba(248,113,113,.2);color:#fca5a5;border-radius:3px;padding:.65rem .85rem;font-size:.73rem;display:flex;align-items:center;gap:.45rem;margin-bottom:1rem;}
+
+        /* FORM */
+        .f-group{margin-bottom:1rem;}
+        .f-label{font-size:.6rem;color:rgba(248,113,113,.6);letter-spacing:2px;text-transform:uppercase;display:block;margin-bottom:.4rem;}
+        .f-label::before{content:'> ';color:rgba(248,113,113,.3);}
+        .f-input{width:100%;background:var(--bg3);border:1px solid rgba(248,113,113,.15);border-radius:3px;padding:.65rem .85rem;color:var(--text);font-size:.84rem;font-family:var(--mono);outline:none;transition:all .2s;caret-color:var(--red);}
+        .f-input:focus{border-color:rgba(248,113,113,.45);box-shadow:0 0 0 3px rgba(248,113,113,.06),inset 0 0 20px rgba(248,113,113,.02);}
+        .f-input::placeholder{color:rgba(255,255,255,.12);}
+
+        /* SUBMIT */
+        .btn-submit{width:100%;background:rgba(248,113,113,.12);border:1px solid rgba(248,113,113,.3);color:var(--red2);border-radius:3px;padding:.75rem;font-size:.82rem;font-family:var(--mono);font-weight:700;cursor:pointer;letter-spacing:1px;text-transform:uppercase;transition:all .2s;display:flex;align-items:center;justify-content:center;gap:.5rem;margin-top:.3rem;}
+        .btn-submit:hover{background:rgba(248,113,113,.2);border-color:rgba(248,113,113,.5);color:#fff;box-shadow:0 0 20px rgba(248,113,113,.15);}
+
+        /* FOOTER */
+        .term-footer{border-top:1px solid rgba(248,113,113,.08);padding:.9rem 1.8rem;display:flex;align-items:center;justify-content:space-between;}
+        .tf-status{font-size:.6rem;color:rgba(248,113,113,.3);display:flex;align-items:center;gap:.35rem;}
+        .status-dot{width:5px;height:5px;border-radius:50%;background:var(--red);box-shadow:0 0 6px var(--red);animation:dotPulse 2s infinite;}
+        .tf-warn{font-size:.6rem;color:rgba(248,113,113,.3);display:flex;align-items:center;gap:.3rem;}
+
+        /* TYPING cursor blink */
+        .cursor{display:inline-block;width:8px;height:14px;background:var(--red);animation:blink .7s infinite;vertical-align:middle;margin-left:2px;}
+        @keyframes blink{0%,100%{opacity:1}50%{opacity:0}}
+    </style>
+</head>
+<body>
+<canvas id="grid"></canvas>
+
+<div class="terminal">
+    <!-- TITLE BAR -->
+    <div class="titlebar">
+        <div class="tb-dots">
+            <div class="tb-dot dot-r"></div>
+            <div class="tb-dot dot-y"></div>
+            <div class="tb-dot dot-g"></div>
+        </div>
+        <span class="tb-label">vaulthub :: admin-access</span>
+        <a href="/" class="tb-back"><i class="bi bi-arrow-left"></i> back</a>
+    </div>
+
+    <!-- BODY -->
+    <div class="term-body">
+        <div class="term-header">
+            <div class="shield-icon"><i class="bi bi-shield-fill-check" style="color:var(--red)"></i></div>
+            <div class="term-title">Admin Terminal</div>
+            <div class="term-sub">RESTRICTED ACCESS · AUTHORISED ONLY<span class="cursor"></span></div>
+        </div>
+
+        <div class="prompt-line">authenticate</div>
+
+        <!-- ERROR -->
+        <div class="alert-err" th:if="${error}">
+            <i class="bi bi-x-circle-fill"></i>
+            <span th:text="${error}">Access denied.</span>
+        </div>
+
+        <!-- ADMIN LOGIN FORM -->
+        <form th:action="@{/login}" method="post">
+            <div class="f-group">
+                <label class="f-label">Email</label>
+                <input type="email" name="email" class="f-input" placeholder="admin@vault.com" required autocomplete="off" spellcheck="false"/>
+            </div>
+            <div class="f-group">
+                <label class="f-label">Password</label>
+                <input type="password" name="password" class="f-input" placeholder="••••••••" required autocomplete="current-password"/>
+            </div>
+            <button type="submit" class="btn-submit">
+                <i class="bi bi-terminal-fill"></i> Authenticate
+            </button>
+        </form>
+    </div>
+
+    <!-- FOOTER -->
+    <div class="term-footer">
+        <div class="tf-status"><span class="status-dot"></span> system online</div>
+        <div class="tf-warn"><i class="bi bi-exclamation-triangle-fill" style="color:rgba(248,113,113,.4)"></i> restricted</div>
+    </div>
+</div>
+
+<script>
+// Grid canvas
+const canvas = document.getElementById('grid');
+const ctx = canvas.getContext('2d');
+function resize() { canvas.width = window.innerWidth; canvas.height = window.innerHeight; }
+resize();
+window.addEventListener('resize', resize);
+
+function drawGrid() {
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    ctx.strokeStyle = 'rgba(248,113,113,0.04)';
+    ctx.lineWidth = 1;
+    const s = 40;
+    for (let x = 0; x < canvas.width; x += s) {
+        ctx.beginPath(); ctx.moveTo(x, 0); ctx.lineTo(x, canvas.height); ctx.stroke();
+    }
+    for (let y = 0; y < canvas.height; y += s) {
+        ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(canvas.width, y); ctx.stroke();
+    }
+}
+drawGrid();
+window.addEventListener('resize', drawGrid);
+</script>
+</body>
+</html>

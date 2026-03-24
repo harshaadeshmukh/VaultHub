@@ -1,0 +1,228 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8"/>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+    <title>Register — VaultHub</title>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet"/>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet"/>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css" rel="stylesheet"/>
+    <style>
+        :root {
+            --bg: #080810; --bg2: #0e0e1a; --bg3: #13131f; --bg4: #1a1a2e;
+            --border: #1e1e32; --border2: #252540;
+            --accent: #6366f1; --accent2: #818cf8; --accent3: #a5b4fc;
+            --cyan: #22d3ee; --green: #34d399; --yellow: #fbbf24;
+            --red: #f87171; --text: #e8e8f5; --muted: #52526e; --muted2: #3a3a55;
+            --font: 'Plus Jakarta Sans', sans-serif; --mono: 'JetBrains Mono', monospace;
+        }
+        * { margin:0; padding:0; box-sizing:border-box; }
+        body { font-family: var(--font); background: var(--bg); color: var(--text); min-height: 100vh; }
+
+        .mobile-top { display: none; background: var(--bg2); border-bottom: 1px solid var(--border); padding: 0.85rem 1.2rem; }
+        .brand { font-size: 1.15rem; font-weight: 800; color: var(--accent2); text-decoration: none; letter-spacing: -0.5px; }
+        .brand span { color: #fff; }
+
+        .page { display: flex; min-height: 100vh; }
+
+        /* LEFT */
+        .left {
+            width: 42%; background: var(--bg2); border-right: 1px solid var(--border);
+            display: flex; flex-direction: column; padding: 2.5rem;
+            position: relative; overflow: hidden;
+        }
+        .left::after {
+            content: ''; position: absolute; width: 450px; height: 450px;
+            background: radial-gradient(circle, rgba(52,211,153,0.07) 0%, transparent 70%);
+            top: -100px; left: -100px; pointer-events: none;
+        }
+        .left .brand { margin-bottom: auto; position: relative; z-index: 1; }
+        .left-body { padding: 1.5rem 0; position: relative; z-index: 1; }
+        .left-body h2 { font-size: clamp(1.5rem, 2.5vw, 1.9rem); font-weight: 800; color: #fff; letter-spacing: -0.5px; margin-bottom: 0.6rem; }
+        .left-body p { color: var(--muted); font-size: 0.87rem; line-height: 1.65; margin-bottom: 1.8rem; }
+        .step { display: flex; align-items: flex-start; gap: 0.8rem; margin-bottom: 1.1rem; }
+        .step-num {
+            width: 26px; height: 26px; border-radius: 50%;
+            background: rgba(99,102,241,0.12); border: 1px solid rgba(99,102,241,0.3);
+            color: var(--accent2); font-size: 0.7rem; font-weight: 700; font-family: var(--mono);
+            display: flex; align-items: center; justify-content: center; flex-shrink: 0; margin-top: 2px;
+        }
+        .step-title { font-size: 0.84rem; font-weight: 600; color: var(--text); }
+        .step-desc { font-size: 0.73rem; color: var(--muted); margin-top: 0.1rem; line-height: 1.5; }
+        .left-foot { font-size: 0.7rem; color: var(--muted); position: relative; z-index: 1; }
+
+        /* RIGHT */
+        .right { flex: 1; display: flex; align-items: center; justify-content: center; padding: 2rem 1.5rem; overflow-y: auto; }
+        .form-wrap { width: 100%; max-width: 400px; padding: 0.5rem 0; }
+        .form-wrap h3 { font-size: 1.4rem; font-weight: 800; color: #fff; letter-spacing: -0.5px; margin-bottom: 0.3rem; }
+        .form-wrap .hint { font-size: 0.81rem; color: var(--muted); margin-bottom: 1.6rem; }
+        .form-wrap .hint a { color: var(--accent2); text-decoration: none; font-weight: 600; }
+
+        .alert-err {
+            background: rgba(248,113,113,0.1); border: 1px solid rgba(248,113,113,0.25);
+            color: #fca5a5; border-radius: 8px; padding: 0.7rem 0.9rem;
+            font-size: 0.81rem; display: flex; align-items: center; gap: 0.5rem; margin-bottom: 1.2rem;
+        }
+
+        .field { margin-bottom: 0.9rem; }
+        .field label { display: block; font-size: 0.76rem; font-weight: 600; color: var(--text); margin-bottom: 0.36rem; }
+        .field input {
+            width: 100%; background: var(--bg2); border: 1px solid var(--border);
+            border-radius: 9px; padding: 0.68rem 0.9rem; font-size: 0.87rem;
+            font-family: var(--font); color: var(--text); outline: none; transition: all 0.2s;
+        }
+        .field input::placeholder { color: #32324a; }
+        .field input:focus { border-color: var(--accent); background: var(--bg3); box-shadow: 0 0 0 3px rgba(99,102,241,0.15); }
+        .field-err { font-size: 0.7rem; color: var(--red); margin-top: 0.28rem; }
+
+        /* password strength */
+        .str-bar { height: 3px; background: var(--border); border-radius: 10px; margin-top: 0.38rem; overflow: hidden; }
+        .str-fill { height: 100%; border-radius: 10px; width: 0%; transition: all 0.3s; }
+        .str-text { font-size: 0.66rem; color: var(--muted); margin-top: 0.28rem; font-family: var(--mono); }
+
+        .btn-sub {
+            width: 100%; background: var(--accent); color: #fff; border: none;
+            border-radius: 9px; padding: 0.72rem; font-size: 0.9rem; font-weight: 700;
+            font-family: var(--font); cursor: pointer; transition: all 0.2s;
+            box-shadow: 0 2px 14px rgba(99,102,241,0.3); margin-top: 0.4rem;
+            display: flex; align-items: center; justify-content: center; gap: 0.4rem;
+        }
+        .btn-sub:hover { background: #5254cc; transform: translateY(-1px); box-shadow: 0 4px 20px rgba(99,102,241,0.4); }
+
+        .pw-wrap { position: relative; display: flex; align-items: center; }
+        .pw-wrap input { width: 100%; background: var(--bg2); border: 1px solid var(--border); border-radius: 9px; padding: 0.68rem 2.6rem 0.68rem 0.9rem; font-size: 0.87rem; font-family: var(--font); color: var(--text); outline: none; transition: all 0.2s; }
+        .pw-wrap input::placeholder { color: #32324a; }
+        .pw-wrap input:focus { border-color: var(--accent); background: var(--bg3); box-shadow: 0 0 0 3px rgba(99,102,241,0.15); }
+        .eye-btn { position: absolute; right: 0.75rem; background: none; border: none; color: var(--muted); cursor: pointer; padding: 0; font-size: 1rem; display: flex; align-items: center; }
+        .terms { font-size: 0.7rem; color: var(--muted); text-align: center; margin-top: 0.9rem; line-height: 1.5; }
+
+        /* RESPONSIVE */
+        @media (max-width: 900px) { .left { width: 48%; } }
+        @media (max-width: 700px) {
+            .left { display: none; }
+            .mobile-top { display: flex; align-items: center; }
+            .page { flex-direction: column; min-height: unset; }
+            .right { padding: 2rem 1.2rem; align-items: flex-start; }
+        }
+        @media (max-width: 400px) { .form-wrap { max-width: 100%; } }
+    </style>
+</head>
+<body>
+
+<div class="mobile-top">
+    <a href="/" class="brand">🗂️ Vault<span>Hub</span></a>
+</div>
+
+<div class="page">
+
+    <!-- LEFT -->
+    <div class="left">
+        <a href="/" class="brand">🗂️ Vault<span>Hub</span></a>
+        <div class="left-body">
+            <h2>Your vault is<br/>3 steps away.</h2>
+            <p>Create your account and start storing files securely in seconds.</p>
+            <div class="step">
+                <div class="step-num">01</div>
+                <div><div class="step-title">Create your account</div><div class="step-desc">Just your name, email and a strong password.</div></div>
+            </div>
+            <div class="step">
+                <div class="step-num">02</div>
+                <div><div class="step-title">Vault is auto-generated</div><div class="step-desc">A unique vault ID is created just for you.</div></div>
+            </div>
+            <div class="step">
+                <div class="step-num">03</div>
+                <div><div class="step-title">Upload your first file</div><div class="step-desc">Upload, view and share it instantly.</div></div>
+            </div>
+        </div>
+        <div class="left-foot">🗂️ VaultHub — Store, manage and share files.</div>
+    </div>
+
+    <!-- RIGHT -->
+    <div class="right">
+        <div class="form-wrap">
+            <h3>Create your vault</h3>
+            <p class="hint">Already have an account? <a href="/login">Sign in →</a></p>
+
+            <div class="alert-err" th:if="${error}">
+                <i class="bi bi-exclamation-circle"></i>
+                <span th:text="${error}">Something went wrong.</span>
+            </div>
+
+            <form th:action="@{/register}" th:object="${registerRequest}" method="post">
+
+                <div class="field">
+                    <label>Full Name</label>
+                    <input type="text" th:field="*{fullName}" placeholder="Rahul Sharma" required/>
+                    <div class="field-err" th:if="${#fields.hasErrors('fullName')}" th:errors="*{fullName}"></div>
+                </div>
+
+                <div class="field">
+                    <label>Email Address</label>
+                    <input type="email" th:field="*{email}" placeholder="you@example.com" required autocomplete="email"/>
+                    <div class="field-err" th:if="${#fields.hasErrors('email')}" th:errors="*{email}"></div>
+                </div>
+
+                <div class="field">
+                    <label>Password</label>
+                    <div class="pw-wrap">
+                        <input type="password" th:field="*{password}" id="pwInput" placeholder="Minimum 8 characters" required autocomplete="new-password"/>
+                        <button type="button" class="eye-btn" onclick="togglePw('pwInput',this)"><i class="bi bi-eye"></i></button>
+                    </div>
+                    <div class="str-bar"><div class="str-fill" id="strFill"></div></div>
+                    <div class="str-text" id="strText">Enter a password</div>
+                    <div class="field-err" th:if="${#fields.hasErrors('password')}" th:errors="*{password}"></div>
+                </div>
+
+                <div class="field">
+                    <label>Confirm Password</label>
+                    <div class="pw-wrap">
+                        <input type="password" th:field="*{confirmPassword}" id="confirmPwInput" placeholder="Repeat your password" required autocomplete="new-password"/>
+                        <button type="button" class="eye-btn" onclick="togglePw('confirmPwInput',this)"><i class="bi bi-eye"></i></button>
+                    </div>
+                    <div class="field-err" th:if="${#fields.hasErrors('confirmPassword')}" th:errors="*{confirmPassword}"></div>
+                </div>
+
+                <button type="submit" class="btn-sub">
+                    <i class="bi bi-shield-lock"></i> Create My Vault
+                </button>
+
+            </form>
+            <p class="terms">Your files are private and only accessible by you.</p>
+        </div>
+    </div>
+
+</div>
+
+<script>
+    function togglePw(id, btn) {
+        const inp = document.getElementById(id);
+        const hidden = inp.type === 'password';
+        inp.type = hidden ? 'text' : 'password';
+        btn.innerHTML = hidden ? '<i class="bi bi-eye-slash"></i>' : '<i class="bi bi-eye"></i>';
+    }
+
+    const pw = document.getElementById('pwInput');
+    const fill = document.getElementById('strFill');
+    const txt = document.getElementById('strText');
+    pw.addEventListener('input', () => {
+        const v = pw.value;
+        let s = 0;
+        if (v.length >= 8) s++;
+        if (/[A-Z]/.test(v)) s++;
+        if (/[0-9]/.test(v)) s++;
+        if (/[^A-Za-z0-9]/.test(v)) s++;
+        const lvl = [
+            {w:'0%',   c:'transparent', t:'Enter a password'},
+            {w:'25%',  c:'#f87171',     t:'Weak'},
+            {w:'50%',  c:'#fbbf24',     t:'Fair'},
+            {w:'75%',  c:'#818cf8',     t:'Good'},
+            {w:'100%', c:'#34d399',     t:'Strong ✓'},
+        ];
+        fill.style.width = lvl[s].w;
+        fill.style.background = lvl[s].c;
+        txt.textContent = lvl[s].t;
+        txt.style.color = lvl[s].c;
+    });
+</script>
+</body>
+</html>

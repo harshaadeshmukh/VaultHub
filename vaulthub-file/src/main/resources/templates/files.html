@@ -1,0 +1,1130 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8"/>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+    <title>My Files — VaultHub</title>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet"/>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet"/>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css" rel="stylesheet"/>
+    <style>
+
+        /* ── FLUID TYPOGRAPHY SCALE ──────────────────────────────
+           Root font-size scales 13px→16px across 360px→1280px.
+           Every rem unit scales automatically. ── */
+        html { font-size: clamp(13px, 0.8rem + 0.8vw, 16px); }
+        @media(max-width:480px) {
+            .page-header h4,.ph-title { font-size: clamp(1rem, 4vw, 1.2rem) !important; }
+            .sp-val,.sc-val,.as-val,.mobile-stat-val { font-size: clamp(.9rem, 3.5vw, 1.2rem) !important; }
+            .fname,.fcard-name,.log-action { font-size: clamp(.78rem, 3.2vw, .88rem) !important; }
+            .fmeta,.fcard-size,.log-file,.log-time { font-size: clamp(.62rem, 2.5vw, .72rem) !important; }
+            .nav-label,.sp-lbl,.sc-lbl,.as-lbl { font-size: clamp(.5rem, 2vw, .6rem) !important; }
+            .bnav a { font-size: clamp(.48rem, 1.8vw, .54rem) !important; }
+            .act-btn,.sheet-btn { font-size: clamp(.74rem, 3vw, .84rem) !important; }
+            .modal-title { font-size: clamp(.85rem, 3.5vw, .95rem) !important; }
+            .chat-header-info .name { font-size: clamp(.8rem, 3.5vw, .9rem) !important; }
+            .msg-bubble { font-size: clamp(.78rem, 3.2vw, .85rem) !important; }
+        }
+        /* ── FLUID TYPOGRAPHY SCALE ─────────────────────────────
+           Root font-size scales from 13px (360px screen)
+           to 16px (1280px screen) using clamp + viewport units.
+           Every rem unit in the app scales automatically.
+           ──────────────────────────────────────────────────── */
+        
+
+        /* Fine-tune specific text roles at small screens */
+        @media(max-width:480px) {
+            .page-header h4, .ph-title { font-size: clamp(1rem, 4vw, 1.2rem) !important; }
+            .sp-val, .sc-val, .as-val, .mobile-stat-val { font-size: clamp(.9rem, 3.5vw, 1.2rem) !important; }
+            .fname, .fcard-name, .log-action { font-size: clamp(.78rem, 3.2vw, .88rem) !important; }
+            .fmeta, .fcard-size, .log-file, .log-time { font-size: clamp(.62rem, 2.5vw, .72rem) !important; }
+            .nav-label, .sp-lbl, .sc-lbl, .as-lbl { font-size: clamp(.5rem, 2vw, .6rem) !important; }
+            .bnav a { font-size: clamp(.48rem, 1.8vw, .54rem) !important; }
+            .act-btn, .sheet-btn { font-size: clamp(.74rem, 3vw, .84rem) !important; }
+            .modal-title { font-size: clamp(.85rem, 3.5vw, .95rem) !important; }
+            .chat-header-info .name { font-size: clamp(.8rem, 3.5vw, .9rem) !important; }
+            .msg-bubble { font-size: clamp(.78rem, 3.2vw, .85rem) !important; }
+        }
+
+        :root {
+            --bg:#080810; --bg2:#0e0e1a; --bg3:#13131f; --bg4:#1a1a2e;
+            --border:#1e1e32; --border2:#252540;
+            --accent:#6366f1; --accent2:#818cf8; --accent3:#a5b4fc;
+            --cyan:#22d3ee; --green:#34d399; --yellow:#fbbf24; --red:#f87171;
+            --text:#e8e8f5; --muted:#52526e; --muted2:#3a3a55;
+            --font:'Plus Jakarta Sans',sans-serif; --mono:'JetBrains Mono',monospace;
+        }
+        *{margin:0;padding:0;box-sizing:border-box;}
+        html{height:100%;overflow:hidden;}
+        body{font-family:var(--font);background:var(--bg);color:var(--text);height:100vh;overflow:hidden;}
+        body::before{content:'';position:fixed;inset:0;pointer-events:none;z-index:0;
+            background:radial-gradient(ellipse 600px 400px at 20% 10%,rgba(99,102,241,.06) 0%,transparent 70%),
+                       radial-gradient(ellipse 400px 400px at 80% 80%,rgba(34,211,238,.04) 0%,transparent 70%);}
+
+        /* TOPBAR */
+        .topbar{position:sticky;top:0;z-index:100;background:rgba(8,8,16,.92);backdrop-filter:blur(16px);border-bottom:1px solid var(--border);padding:0 1.5rem;height:52px;display:flex;align-items:center;justify-content:space-between;}
+        .brand{font-size:1.05rem;font-weight:800;letter-spacing:-.3px;text-decoration:none;display:flex;align-items:center;gap:.4rem;}
+        .brand-text{color:var(--accent3);}.brand-text span{color:#fff;}
+        .topbar-right{display:flex;align-items:center;gap:.6rem;}
+        .user-pill{display:flex;align-items:center;gap:.5rem;background:var(--bg3);border:1px solid var(--border2);border-radius:24px;padding:.22rem .8rem .22rem .28rem;}
+        .av{width:26px;height:26px;border-radius:50%;background:linear-gradient(135deg,var(--accent),var(--cyan));display:flex;align-items:center;justify-content:center;font-size:.7rem;font-weight:800;color:#fff;flex-shrink:0;}
+        .av-name{font-size:.78rem;font-weight:600;}
+        .logout-btn{background:transparent;border:1px solid var(--border2);color:var(--muted);padding:.25rem .65rem;border-radius:7px;font-size:.74rem;font-family:var(--font);text-decoration:none;display:flex;align-items:center;gap:.28rem;transition:all .2s;}
+        .logout-btn:hover{border-color:var(--red);color:var(--red);}
+
+        /* LAYOUT */
+        .layout{display:flex;height:calc(100vh - 52px);position:relative;z-index:1;overflow:hidden;}
+
+        /* SIDEBAR */
+        .sidebar{width:210px;flex-shrink:0;background:var(--bg2);border-right:1px solid var(--border);padding:1.2rem .7rem;display:flex;flex-direction:column;height:100%;overflow-y:auto;}
+        .nav-section{margin-bottom:.3rem;}
+        .nav-label{font-size:.55rem;font-weight:700;letter-spacing:2px;text-transform:uppercase;color:var(--muted2);padding:.6rem .6rem .3rem;}
+        .nav-item{display:flex;align-items:center;gap:.6rem;padding:.48rem .65rem;border-radius:8px;text-decoration:none;color:var(--muted);font-size:.8rem;font-weight:500;transition:all .15s;margin-bottom:1px;}
+        .nav-item:hover{background:var(--bg3);color:var(--text);}
+        .nav-item.active{background:rgba(99,102,241,.12);color:var(--accent3);border-left:2px solid var(--accent);padding-left:calc(.65rem - 2px);}
+        .nav-item i{font-size:.85rem;width:16px;text-align:center;flex-shrink:0;}
+        .nav-badge{margin-left:auto;font-size:.58rem;font-family:var(--mono);background:var(--bg4);color:var(--muted2);padding:.06rem .38rem;border-radius:6px;}
+        .nav-item.active .nav-badge{background:rgba(99,102,241,.15);color:var(--accent2);}
+        .sidebar-footer{margin-top:auto;padding-top:1rem;border-top:1px solid var(--border);}
+        .sf-text{font-size:.62rem;color:var(--muted2);text-align:center;line-height:1.6;font-family:var(--mono);}
+
+        /* MAIN */
+        .main{flex:1;padding:1.5rem;overflow-y:auto;height:100%;}
+        .page-head{display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:.8rem;margin-bottom:1.3rem;}
+        .page-head h4{font-size:1.15rem;font-weight:800;color:#fff;letter-spacing:-.3px;margin:0;}
+        .page-head p{font-size:.76rem;color:var(--muted);margin:.15rem 0 0;}
+        .btn-upload{background:var(--accent);color:#fff;border:none;border-radius:8px;padding:.5rem 1.2rem;font-size:.8rem;font-weight:700;font-family:var(--font);text-decoration:none;display:inline-flex;align-items:center;gap:.38rem;box-shadow:0 2px 16px rgba(99,102,241,.35);transition:all .2s;}
+        .btn-upload:hover{background:#5254cc;color:#fff;transform:translateY(-1px);}
+
+        /* ALERTS */
+        .alert-ok {background:rgba(52,211,153,.08);border:1px solid rgba(52,211,153,.2);color:#6ee7b7;border-radius:9px;padding:.7rem 1rem;font-size:.81rem;display:flex;align-items:center;gap:.5rem;margin-bottom:1rem;}
+        .alert-err{background:rgba(248,113,113,.08);border:1px solid rgba(248,113,113,.2);color:#fca5a5;border-radius:9px;padding:.7rem 1rem;font-size:.81rem;display:flex;align-items:center;gap:.5rem;margin-bottom:1rem;}
+
+        /* STAT STRIP */
+        .stat-strip{display:flex;gap:.8rem;margin-bottom:1.2rem;flex-wrap:wrap;}
+        .stat-pill{background:var(--bg2);border:1px solid var(--border);border-radius:10px;padding:.75rem 1rem;display:flex;align-items:center;gap:.6rem;flex:1;min-width:130px;}
+        .sp-icon{width:32px;height:32px;border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:.88rem;flex-shrink:0;}
+        .sp-val{font-size:1.15rem;font-weight:800;color:#fff;line-height:1;font-family:var(--mono);}
+        .sp-lbl{font-size:.6rem;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:1px;margin-top:2px;}
+
+        /* SEARCH */
+        .search-bar{background:var(--bg2);border:1px solid var(--border);border-radius:9px;padding:.55rem .9rem;display:flex;align-items:center;gap:.55rem;max-width:480px;}
+        .search-bar i{color:var(--muted);font-size:.85rem;}
+        .search-bar input{flex:1;background:transparent;border:none;outline:none;color:var(--text);font-size:.84rem;font-family:var(--font);}
+        .search-bar input::placeholder{color:var(--muted2);}
+        .sort-btn{background:var(--bg3);border:1px solid var(--border);color:var(--muted);padding:.25rem .65rem;border-radius:6px;font-size:.7rem;font-family:var(--font);cursor:pointer;transition:all .15s;display:inline-flex;align-items:center;gap:.2rem;}
+        .sort-btn:hover,.sort-btn.active{color:var(--accent3);border-color:var(--accent);}
+
+        /* FILE PANEL */
+        .file-panel{background:var(--bg2);border:1px solid var(--border);border-radius:12px;overflow:hidden;margin-bottom:1.5rem;}
+        .file-panel-head{padding:.85rem 1.1rem;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;}
+        .fp-title{font-size:.82rem;font-weight:700;color:var(--text);display:flex;align-items:center;gap:.45rem;}
+        .live-dot{width:7px;height:7px;border-radius:50%;background:var(--green);box-shadow:0 0 6px var(--green);display:inline-block;animation:pulse 2s infinite;}
+        .shared-dot{background:var(--cyan);box-shadow:0 0 6px var(--cyan);}
+        @keyframes pulse{0%,100%{opacity:1}50%{opacity:.4}}
+
+        /* TABLE */
+        .ftable{width:100%;border-collapse:collapse;table-layout:fixed;}
+        .ftable th{padding:.6rem 1rem;text-align:left;font-size:.6rem;font-weight:700;color:var(--muted2);text-transform:uppercase;letter-spacing:1.5px;border-bottom:1px solid var(--border);background:var(--bg3);}
+        .ftable td{padding:.8rem 1rem;font-size:.82rem;color:var(--text);border-bottom:1px solid rgba(30,30,50,.6);vertical-align:middle;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+        .ftable tr:last-child td{border-bottom:none;}
+        .ftable tbody tr{transition:background .15s;}
+        .ftable tbody tr:hover{background:rgba(99,102,241,.04);}
+        .ftable th:nth-child(1),.ftable td:nth-child(1){width:40%;}
+        .ftable th:nth-child(2),.ftable td:nth-child(2){width:11%;}
+        .ftable th:nth-child(3),.ftable td:nth-child(3){width:12%;}
+        .ftable th:nth-child(4),.ftable td:nth-child(4){width:9%;}
+        .ftable th:nth-child(5),.ftable td:nth-child(5){width:28%;white-space:nowrap;overflow:visible;}
+        .file-icon{width:34px;height:34px;border-radius:9px;display:flex;align-items:center;justify-content:center;font-size:1rem;flex-shrink:0;}
+        .fname{font-size:.84rem;font-weight:600;color:#fff;}
+        .fmeta{font-size:.67rem;color:var(--muted);font-family:var(--mono);margin-top:2px;}
+        .status-pill{display:inline-flex;align-items:center;gap:.25rem;font-size:.62rem;font-family:var(--mono);padding:.15rem .5rem;border-radius:20px;}
+        .pill-green{background:rgba(52,211,153,.1);color:var(--green);border:1px solid rgba(52,211,153,.2);}
+        .pill-cyan {background:rgba(34,211,238,.08);color:var(--cyan);border:1px solid rgba(34,211,238,.2);}
+
+        /* PERSON CHIP */
+        .person-chip{display:inline-flex;align-items:center;gap:.38rem;background:var(--bg3);border:1px solid var(--border2);border-radius:20px;padding:.18rem .6rem .18rem .22rem;}
+        .person-av{width:19px;height:19px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:.58rem;font-weight:800;color:#fff;flex-shrink:0;}
+        .person-name{font-size:.71rem;font-weight:600;color:var(--text);}
+
+        /* ACTION BUTTONS */
+        .act-btn{background:var(--bg3);border:1px solid var(--border2);color:var(--muted);padding:.28rem .6rem;border-radius:7px;font-size:.73rem;font-family:var(--font);text-decoration:none;cursor:pointer;display:inline-flex;align-items:center;gap:.28rem;transition:all .15s;}
+        .act-btn:hover{color:var(--text);}
+        .act-btn.view:hover  {color:var(--accent3);border-color:var(--accent);}
+        .act-btn.dl:hover    {color:var(--green);border-color:var(--green);}
+        .act-btn.rename:hover{color:var(--yellow);border-color:var(--yellow);}
+        .act-btn.share:hover {color:var(--cyan);border-color:var(--cyan);}
+        .act-btn.del:hover   {color:var(--red);border-color:var(--red);}
+
+        /* EMPTY */
+        .empty{text-align:center;padding:3rem 1rem;}
+        .eicon{width:52px;height:52px;background:var(--bg3);border:1px solid var(--border2);border-radius:14px;display:flex;align-items:center;justify-content:center;font-size:1.3rem;margin:0 auto .9rem;}
+        .empty h5{font-size:.9rem;font-weight:700;color:#fff;margin-bottom:.3rem;}
+        .empty p{font-size:.77rem;color:var(--muted);line-height:1.65;margin-bottom:1.2rem;}
+        .no-results{text-align:center;padding:2.5rem 1rem;display:none;}
+
+        /* MOBILE CARDS */
+        .file-cards{display:none;padding:.75rem;}
+        .fcard{background:var(--bg3);border:1px solid var(--border);border-radius:10px;padding:.9rem;margin-bottom:.65rem;}
+        .fcard:last-child{margin-bottom:0;}
+        .fcard-head{display:flex;align-items:center;gap:.6rem;margin-bottom:.6rem;}
+        .fcard-meta{margin-bottom:.55rem;}
+        .fcard-actions{display:flex;gap:.4rem;flex-wrap:wrap;}
+
+        /* ══ SHARE MODAL ══════════════════════════════ */
+        .modal-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.7);backdrop-filter:blur(6px);z-index:500;align-items:center;justify-content:center;}
+        .modal-overlay.show{display:flex;}
+        .modal-box{background:var(--bg2);border:1px solid var(--border2);border-radius:16px;padding:1.5rem;width:100%;max-width:440px;margin:1rem;}
+
+        .sm-head{display:flex;align-items:center;gap:.65rem;margin-bottom:1.2rem;padding-bottom:1rem;border-bottom:1px solid var(--border);}
+        .sm-icon{width:38px;height:38px;background:rgba(34,211,238,.1);border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:1.05rem;flex-shrink:0;}
+        .sm-title{font-size:.92rem;font-weight:800;color:#fff;}
+        .sm-fname{font-size:.68rem;color:var(--muted);font-family:var(--mono);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:250px;margin-top:1px;}
+        .sm-close{margin-left:auto;background:transparent;border:none;color:var(--muted);cursor:pointer;font-size:1.1rem;padding:.2rem;transition:color .15s;}
+        .sm-close:hover{color:var(--red);}
+        .expiry-btn{background:var(--bg3);border:1px solid var(--border);color:var(--muted);border-radius:7px;padding:.28rem .7rem;font-size:.72rem;font-family:var(--font);font-weight:600;cursor:pointer;transition:all .15s;}
+        .expiry-btn:hover{border-color:var(--yellow);color:var(--yellow);}
+        .expiry-btn.active{background:rgba(251,191,36,.12);border-color:var(--yellow);color:var(--yellow);}
+
+        .email-row{display:flex;gap:.5rem;margin-bottom:.85rem;}
+        .email-input{flex:1;background:var(--bg3);border:1px solid var(--border2);border-radius:9px;padding:.6rem .85rem;color:var(--text);font-size:.84rem;font-family:var(--font);outline:none;transition:border-color .2s;}
+        .email-input:focus{border-color:var(--accent);}
+        .email-input.valid  {border-color:rgba(52,211,153,.5);}
+        .email-input.invalid{border-color:rgba(248,113,113,.45);}
+        .lookup-btn{background:var(--bg3);border:1px solid var(--border2);color:var(--muted);border-radius:9px;padding:.55rem 1rem;font-size:.78rem;font-weight:700;font-family:var(--font);cursor:pointer;transition:all .2s;display:inline-flex;align-items:center;gap:.3rem;white-space:nowrap;}
+        .lookup-btn:hover:not(:disabled){color:var(--accent3);border-color:var(--accent);}
+        .lookup-btn:disabled{opacity:.5;cursor:not-allowed;}
+
+        .user-found{display:none;background:rgba(52,211,153,.05);border:1px solid rgba(52,211,153,.2);border-radius:10px;padding:.75rem .95rem;margin-bottom:.85rem;align-items:center;gap:.65rem;}
+        .user-found.show{display:flex;}
+        .ufc-av{width:36px;height:36px;background:linear-gradient(135deg,var(--accent),var(--cyan));border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:.85rem;font-weight:800;color:#fff;flex-shrink:0;}
+        .ufc-name{font-size:.86rem;font-weight:700;color:#fff;}
+        .ufc-email{font-size:.68rem;color:var(--muted);font-family:var(--mono);}
+        .ufc-badge{margin-left:auto;font-size:.6rem;font-family:var(--mono);background:rgba(52,211,153,.1);border:1px solid rgba(52,211,153,.25);color:var(--green);padding:.1rem .48rem;border-radius:20px;white-space:nowrap;display:flex;align-items:center;gap:.25rem;}
+
+        .user-not-found{display:none;background:rgba(248,113,113,.05);border:1px solid rgba(248,113,113,.2);border-radius:10px;padding:.65rem .95rem;margin-bottom:.85rem;align-items:center;gap:.5rem;font-size:.8rem;color:#fca5a5;}
+        .user-not-found.show{display:flex;}
+
+        .share-result{display:none;border-radius:10px;padding:.65rem .95rem;margin-bottom:.85rem;font-size:.8rem;align-items:center;gap:.5rem;}
+        .share-result.show{display:flex;}
+        .share-result.ok {background:rgba(52,211,153,.07);border:1px solid rgba(52,211,153,.2);color:#6ee7b7;}
+        .share-result.err{background:rgba(248,113,113,.07);border:1px solid rgba(248,113,113,.2);color:#fca5a5;}
+
+        .sm-footer{display:flex;gap:.6rem;justify-content:flex-end;}
+        .btn-cancel{background:transparent;border:1px solid var(--border2);color:var(--muted);border-radius:8px;padding:.45rem 1rem;font-size:.8rem;font-family:var(--font);font-weight:600;cursor:pointer;transition:all .15s;}
+        .btn-cancel:hover{color:var(--text);}
+        .btn-send{background:var(--bg3);border:1px solid var(--border);color:#555;border-radius:8px;padding:.45rem 1.3rem;font-size:.8rem;font-family:var(--font);font-weight:700;cursor:not-allowed;transition:all .2s;display:inline-flex;align-items:center;gap:.35rem;}
+        .btn-send.ready{background:var(--accent);border-color:var(--accent);color:#fff;cursor:pointer;box-shadow:0 2px 12px rgba(99,102,241,.35);}
+        .btn-send.ready:hover{background:#5254cc;}
+
+        /* DELETE MODAL */
+        .del-modal-box{background:var(--bg2);border:1px solid var(--border2);border-radius:14px;padding:1.4rem;width:100%;max-width:430px;margin:1rem;}
+
+        /* RENAME MODAL HEADER */
+        .modal-head{display:flex;align-items:center;justify-content:space-between;padding:1.1rem 1.3rem;border-bottom:1px solid var(--border);}
+        .modal-close{background:transparent;border:none;color:var(--muted);cursor:pointer;font-size:1rem;padding:.25rem;line-height:1;border-radius:5px;transition:color .15s;}
+        .modal-close:hover{color:var(--red);}
+
+        /* BOTTOM NAV */
+        .bnav{display:none;position:fixed;bottom:0;left:0;right:0;background:rgba(8,8,16,.97);border-top:1px solid var(--border);backdrop-filter:blur(12px);padding:.4rem 0 env(safe-area-inset-bottom,.2rem);z-index:200;}
+        .bnav a{flex:1;display:flex;flex-direction:column;align-items:center;gap:.1rem;text-decoration:none;color:var(--muted2);font-size:.52rem;font-weight:700;letter-spacing:.5px;text-transform:uppercase;transition:color .2s;padding:.2rem 0;}
+        .bnav a i{font-size:1.1rem;}
+        .bnav a.active,.bnav a:hover{color:var(--accent3);}
+
+        @media(max-width:768px){.sidebar{display:none;}.main{padding:.75rem;padding-bottom:74px;}.ftable-wrap{display:none;}.file-cards{display:block;}.bnav{display:flex;}}
+        @media(max-width:580px){.topbar{padding:0 1rem}.av-name{display:none}}
+
+        /* ── MOBILE FILE CARD — clean, no clutter ── */
+        .mobile-topbar{display:none;} /* hidden on desktop */
+        @media(max-width:768px){
+            /* Hide the stat strip on mobile — shown differently */
+            .stat-strip{display:none;}
+            /* Mobile top bar with key stats + shared shortcut */
+            .mobile-topbar{display:flex;align-items:center;gap:.6rem;padding:.6rem .75rem;background:var(--bg2);border:1px solid var(--border);border-radius:10px;margin-bottom:.75rem;}
+            .mobile-stat{flex:1;text-align:center;}
+            .mobile-stat-val{font-size:1.05rem;font-weight:800;color:#fff;font-family:var(--mono);}
+            .mobile-stat-lbl{font-size:.55rem;color:var(--muted);text-transform:uppercase;letter-spacing:.8px;font-weight:700;}
+            .mobile-stat-divider{width:1px;height:28px;background:var(--border);flex-shrink:0;}
+            .mobile-shared-btn{background:rgba(34,211,238,.08);border:1px solid rgba(34,211,238,.2);color:var(--cyan);border-radius:8px;padding:.4rem .8rem;font-size:.76rem;font-weight:700;text-decoration:none;display:flex;align-items:center;gap:.35rem;white-space:nowrap;flex-shrink:0;}
+            .mobile-shared-btn:hover{background:rgba(34,211,238,.15);}
+
+            /* Clean card */
+            .fcard{background:var(--bg2);border:1px solid var(--border);border-radius:12px;padding:.85rem .9rem;margin-bottom:.55rem;display:flex;align-items:center;gap:.75rem;position:relative;}
+            .fcard-icon{width:40px;height:40px;border-radius:10px;background:rgba(99,102,241,.1);display:flex;align-items:center;justify-content:center;font-size:1rem;color:var(--accent);flex-shrink:0;}
+            .fcard-body{flex:1;min-width:0;}
+            .fcard-name{font-size:.84rem;font-weight:600;color:#fff;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+            .fcard-size{font-size:.68rem;color:var(--muted);font-family:var(--mono);margin-top:.08rem;}
+            .fcard-pill{font-size:.58rem;font-weight:700;background:rgba(52,211,153,.12);color:var(--green);border:1px solid rgba(52,211,153,.25);border-radius:4px;padding:.1rem .35rem;margin-top:.2rem;display:inline-block;}
+
+            /* Three-dot menu button */
+            .fcard-menu-btn{background:transparent;border:1px solid var(--border2);color:var(--muted);width:32px;height:32px;border-radius:8px;display:flex;align-items:center;justify-content:center;cursor:pointer;font-size:1rem;flex-shrink:0;transition:all .15s;}
+            .fcard-menu-btn:hover{background:var(--bg3);color:var(--text);}
+
+            /* Action bottom sheet */
+            .fcard-sheet-overlay{position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:800;display:none;backdrop-filter:blur(2px);}
+            .fcard-sheet-overlay.open{display:block;}
+            .fcard-sheet{position:fixed;bottom:0;left:0;right:0;background:var(--bg2);border-top:1px solid var(--border2);border-radius:18px 18px 0 0;z-index:801;padding:1rem;transform:translateY(100%);transition:transform .25s cubic-bezier(.4,0,.2,1);}
+            .fcard-sheet.open{transform:translateY(0);}
+            .sheet-handle{width:36px;height:4px;background:var(--border2);border-radius:2px;margin:0 auto .9rem;}
+            .sheet-fname{font-size:.85rem;font-weight:700;color:#fff;margin-bottom:.7rem;padding-bottom:.7rem;border-bottom:1px solid var(--border);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+            .sheet-actions{display:flex;flex-direction:column;gap:.35rem;padding-bottom:env(safe-area-inset-bottom,0);}
+            .sheet-btn{display:flex;align-items:center;gap:.75rem;padding:.7rem .9rem;border-radius:10px;font-size:.85rem;font-weight:500;color:var(--text);background:transparent;border:none;width:100%;cursor:pointer;font-family:var(--font);transition:background .15s;}
+            .sheet-btn:hover,.sheet-btn:active{background:var(--bg3);}
+            .sheet-btn i{width:18px;text-align:center;font-size:1rem;color:var(--muted);}
+            .sheet-btn.danger{color:var(--red);}
+            .sheet-btn.danger i{color:var(--red);}
+
+            /* Hide old fcard-actions and fcard-head/fcard-meta on mobile */
+            .fcard-actions,.fcard-head,.fcard-meta{display:none;}
+        }
+    </style>
+</head>
+<body>
+
+<header class="topbar">
+    <a href="/dashboard" class="brand">
+        <span class="brand-icon">🗂️</span>
+        <span class="brand-text">Vault<span>Hub</span></span>
+    </a>
+    <div class="topbar-right">
+        <div class="user-pill">
+            <div class="av" style="overflow:hidden;padding:0;">
+                <img th:if="${profilePhoto != null and !profilePhoto.isEmpty()}" th:src="${profilePhoto}" style="width:100%;height:100%;object-fit:cover;border-radius:50%;" alt="avatar"/>
+                <span th:if="${profilePhoto == null or profilePhoto.isEmpty()}" th:text="${#strings.substring(displayName,0,1).toUpperCase()}">H</span>
+            </div>
+            <span class="av-name" th:text="${displayName}">Harshad</span>
+        </div>
+        <a href="/logout" class="logout-btn"><i class="bi bi-box-arrow-right"></i><span class="d-none d-sm-inline">Logout</span></a>
+    </div>
+</header>
+
+<div class="layout">
+    <aside class="sidebar">
+        <div class="nav-section">
+            <div class="nav-label">Main</div>
+            <a href="/dashboard" class="nav-item"><i class="bi bi-grid-1x2-fill"></i> Dashboard</a>
+            <a href="/files" class="nav-item active"><i class="bi bi-folder2-open"></i> My Files <span class="nav-badge" th:text="${fileCount}">0</span></a>
+            <a href="/files/upload" class="nav-item"><i class="bi bi-cloud-upload"></i> Upload File</a>
+            <a href="/files/shared" class="nav-item"><i class="bi bi-share-fill"></i> Shared Files <span class="nav-badge" th:text="${sharedCount}">0</span></a>
+        </div>
+        <div class="nav-section">
+            <div class="nav-label">Vault</div>
+            <a href="/activity" class="nav-item"><i class="bi bi-activity"></i> Activity Log</a>
+            <a href="/chat" class="nav-item"><i class="bi bi-chat-dots-fill"></i> Chat</a>
+        </div>
+        <div class="nav-section">
+            <div class="nav-label">Account</div>
+            <a href="/settings" class="nav-item"><i class="bi bi-gear-fill"></i> Settings</a>
+        </div>
+            <div class="nav-section" th:if="${isAdmin}">
+                <div class="nav-label">System</div>
+                <a href="/admin" class="nav-item" style="color:var(--red);opacity:.85"><i class="bi bi-shield-fill-check"></i> Admin Panel</a>
+            </div>
+        <div class="sidebar-footer">
+            <div class="sf-text">VaultHub · Secure Storage</div>
+        </div>
+    </aside>
+
+    <main class="main">
+        <div class="page-head">
+            <div>
+                <h4><i class="bi bi-folder2-open" style="color:var(--accent2)"></i> My Files</h4>
+                <p>All your vault files</p>
+            </div>
+            <a href="/files/upload" class="btn-upload"><i class="bi bi-cloud-upload"></i> Upload File</a>
+        </div>
+
+        <div class="alert-ok" id="successAlert" style="display:none"><i class="bi bi-check-circle-fill"></i><span id="successMsg"></span></div>
+        <div class="alert-err" id="errorAlert"   style="display:none"><i class="bi bi-exclamation-circle-fill"></i><span id="errorMsg"></span></div>
+
+        <!-- MOBILE TOP BAR (shown only on mobile via CSS) -->
+        <div class="mobile-topbar">
+            <div class="mobile-stat">
+                <div class="mobile-stat-val" th:text="${fileCount}">0</div>
+                <div class="mobile-stat-lbl">Files</div>
+            </div>
+            <div class="mobile-stat-divider"></div>
+            <div class="mobile-stat">
+                <div class="mobile-stat-val" th:with="mb=${totalBytes != null and totalBytes > 0 ? totalBytes / 1048576.0 : 0}" th:text="${#numbers.formatDecimal(mb,1,1)} + 'MB'">0MB</div>
+                <div class="mobile-stat-lbl">Used</div>
+            </div>
+            <div class="mobile-stat-divider"></div>
+            <div class="mobile-stat">
+                <div class="mobile-stat-val" th:text="${sharedCount}">0</div>
+                <div class="mobile-stat-lbl">Shared</div>
+            </div>
+            <div class="mobile-stat-divider"></div>
+            <a href="/files/shared" class="mobile-shared-btn">
+                <i class="bi bi-share-fill"></i> Shared
+            </a>
+        </div>
+
+        <!-- STATS -->
+        <div class="stat-strip">
+            <div class="stat-pill">
+                <div class="sp-icon" style="background:rgba(99,102,241,.1)"><i class="bi bi-folder2-open" style="color:var(--accent2)"></i></div>
+                <div><div class="sp-val" th:text="${fileCount}">0</div><div class="sp-lbl">My Files</div></div>
+            </div>
+            <div class="stat-pill">
+                <div class="sp-icon" style="background:rgba(34,211,238,.07)"><i class="bi bi-hdd-fill" style="color:var(--cyan)"></i></div>
+                <div>
+                    <div class="sp-val" th:with="mb=${totalBytes != null and totalBytes > 0 ? totalBytes / 1048576.0 : 0}"
+                         th:text="${#numbers.formatDecimal(mb,1,1)} + ' MB'">0 MB</div>
+                    <div class="sp-lbl">Storage</div>
+                </div>
+            </div>
+            <div class="stat-pill">
+                <div class="sp-icon" style="background:rgba(34,211,238,.07)"><i class="bi bi-arrow-down-left-circle-fill" style="color:var(--cyan)"></i></div>
+                <div><div class="sp-val" th:text="${sharedCount}">0</div><div class="sp-lbl">Shared with me</div></div>
+            </div>
+            <div class="stat-pill">
+                <div class="sp-icon" style="background:rgba(52,211,153,.08)"><i class="bi bi-shield-lock-fill" style="color:var(--green)"></i></div>
+                
+            </div>
+        </div>
+
+        <!-- SEARCH + SORT -->
+        <div class="d-flex gap-2 align-items-center mb-3 flex-wrap">
+            <div class="search-bar flex-grow-1">
+                <i class="bi bi-search"></i>
+                <input type="text" id="searchInput" placeholder="Search my files..." oninput="filterFiles()"/>
+                <i class="bi bi-x-circle" id="clearSearch" style="cursor:pointer;display:none;color:var(--muted)" onclick="clearSearch()"></i>
+            </div>
+            <div class="d-flex gap-1 align-items-center">
+                <span style="font-size:.68rem;color:var(--muted)">Sort:</span>
+                <button class="sort-btn active" id="sortName" onclick="sortFiles('name')"><i class="bi bi-sort-alpha-down"></i> Name</button>
+                <button class="sort-btn" id="sortDate" onclick="sortFiles('date')"><i class="bi bi-calendar3"></i> Date</button>
+                <button class="sort-btn" id="sortSize" onclick="sortFiles('size')"><i class="bi bi-bar-chart"></i> Size</button>
+            </div>
+        </div>
+
+        <!-- ═══════════════════════════════════
+             SECTION 1 — MY OWN FILES
+             ═══════════════════════════════════ -->
+        <div class="file-panel">
+            <div class="file-panel-head">
+                <span class="fp-title"><span class="live-dot"></span> Vault Files</span>
+                <span style="font-size:.7rem;color:var(--muted);font-family:var(--mono)" id="fileCountLabel"
+                      th:text="${fileCount} + ' files'">0 files</span>
+            </div>
+
+            <div class="empty" th:if="${#lists.isEmpty(files)}">
+                <div class="eicon"><i class="bi bi-cloud-slash" style="color:var(--muted2)"></i></div>
+                <h5>No files yet</h5>
+                <p>Upload your first file to get started.</p>
+                <a href="/files/upload" class="btn-upload"><i class="bi bi-cloud-upload"></i> Upload First File</a>
+            </div>
+
+            <!-- TABLE desktop -->
+            <div class="ftable-wrap" th:if="${!#lists.isEmpty(files)}">
+                <table class="ftable" id="fileTable">
+                    <thead><tr>
+                        <th>File</th>
+                        <th class="d-none d-md-table-cell">Size</th>
+                        
+                        <th class="d-none d-lg-table-cell">Uploaded</th>
+                        <th>Status</th>
+                        <th>Actions</th>
+                    </tr></thead>
+                    <tbody>
+                    <tr th:each="file : ${files}"
+                        th:data-name="${file.fileName}"
+                        th:data-size="${file.fileSize}"
+                        th:data-date="${file.createdAt}">
+                        <td>
+                            <div class="d-flex align-items-center gap-2">
+                                <div class="file-icon" style="background:rgba(99,102,241,.1)">
+                                    <i class="bi bi-file-earmark-fill" style="color:var(--accent)"></i>
+                                </div>
+                                <div>
+                                    <div class="fname" th:text="${file.fileName}">file.pdf</div>
+                                    <div class="fmeta" th:text="${file.mimeType}">type</div>
+                                </div>
+                            </div>
+                        </td>
+                        <td class="d-none d-md-table-cell" style="font-family:var(--mono);font-size:.78rem" th:text="${file.fileSizeFormatted}">0</td>
+                        
+                        <td class="d-none d-lg-table-cell upload-date" style="font-size:.75rem;color:var(--muted)" th:data-date="${file.createdAt}" th:text="${file.createdAt}">-</td>
+                        <td><span class="status-pill pill-green" th:text="${file.status}">READY</span></td>
+                        <td>
+                            <div class="d-flex gap-1 flex-wrap">
+                                <a th:href="@{/files/view/{uuid}(uuid=${file.fileUuid})}" class="act-btn view"><i class="bi bi-eye"></i> View</a>
+                                <a th:href="@{/files/download/{uuid}(uuid=${file.fileUuid})}" class="act-btn dl"><i class="bi bi-download"></i></a>
+                                <button class="act-btn rename"
+                                        th:data-uuid="${file.fileUuid}"
+                                        th:data-name="${file.fileName}"
+                                        onclick="openRenameModal(this.dataset.uuid, this.dataset.name)"
+                                        title="Rename">
+                                    <i class="bi bi-pencil"></i>
+                                </button>
+                                <button class="act-btn share"
+                                        th:data-uuid="${file.fileUuid}"
+                                        th:data-name="${file.fileName}"
+                                        onclick="openShareModal(this.dataset.uuid, this.dataset.name)">
+                                    <i class="bi bi-person-plus"></i>
+                                </button>
+                                <form th:action="@{/files/delete/{uuid}(uuid=${file.fileUuid})}" method="post"
+                                      style="display:inline"
+                                      th:data-filename="${file.fileName}"
+                                      onsubmit="return confirmDelete(event,this)">
+                                    <button type="submit" class="act-btn del"><i class="bi bi-trash3"></i></button>
+                                </form>
+                            </div>
+                        </td>
+                    </tr>
+                    </tbody>
+                </table>
+                <div class="no-results" id="noResults">
+                    <p style="color:var(--muted);font-size:.82rem"><i class="bi bi-search" style="opacity:.3;font-size:1.5rem;display:block;margin-bottom:.5rem"></i>No files match your search.</p>
+                </div>
+            </div>
+
+            <!-- CARDS mobile -->
+            <div class="file-cards" th:if="${!#lists.isEmpty(files)}" id="mobileCards">
+                <div class="fcard"
+                     th:each="file : ${files}"
+                     th:data-name="${file.fileName}"
+                     th:data-uuid="${file.fileUuid}"
+                     th:data-size="${file.fileSizeFormatted}"
+                     th:data-view="@{/files/view/{u}(u=${file.fileUuid})}"
+                     th:data-dl="@{/files/download/{u}(u=${file.fileUuid})}"
+                     th:data-del="@{/files/delete/{u}(u=${file.fileUuid})}">
+                    <div class="fcard-icon"><i class="bi bi-file-earmark-fill"></i></div>
+                    <div class="fcard-body">
+                        <div class="fcard-name" th:text="${file.fileName}">file.pdf</div>
+                        <div class="fcard-size" th:text="${file.fileSizeFormatted}">1.2 MB</div>
+                        <span class="fcard-pill" th:if="${file.status == 'READY'}">READY</span>
+                    </div>
+                    <button class="fcard-menu-btn" onclick="openSheet(this.closest('.fcard'))">
+                        <i class="bi bi-three-dots-vertical"></i>
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- ═══════════════════════════════════
+             SECTION 2 — FILES SHARED WITH ME
+             Only shown if sharedCount > 0
+             View + Download only, no delete/share
+             ═══════════════════════════════════ -->
+        <div class="file-panel" th:if="${sharedCount > 0}">
+            <div class="file-panel-head">
+                <span class="fp-title">
+                    <span class="live-dot shared-dot"></span>
+                    Shared with me
+                </span>
+                <span style="font-size:.7rem;color:var(--muted);font-family:var(--mono)"
+                      th:text="${sharedCount} + ' files'">0 files</span>
+            </div>
+
+            <!-- TABLE desktop -->
+            <div class="ftable-wrap">
+                <table class="ftable">
+                    <thead><tr>
+                        <th>File</th>
+                        <th class="d-none d-md-table-cell">Size</th>
+                        <th class="d-none d-lg-table-cell">Shared by</th>
+                        <th class="d-none d-lg-table-cell">When</th>
+                        <th>Actions</th>
+                    </tr></thead>
+                    <tbody>
+                    <!--
+                        sharedWithMe = List<SharedFileView>
+                        Fields: fileUuid, fileName, fileSizeFormatted, mimeType, ownerEmail, sharedAt
+                    -->
+                    <tr th:each="item : ${sharedWithMe}">
+                        <td>
+                            <div class="d-flex align-items-center gap-2">
+                                <div class="file-icon" style="background:rgba(34,211,238,.07)">
+                                    <i class="bi bi-file-earmark-fill" style="color:var(--cyan)"></i>
+                                </div>
+                                <div>
+                                    <div class="fname" th:text="${item.fileName}">file.pdf</div>
+                                    <div class="fmeta" th:text="${item.mimeType}">type</div>
+                                </div>
+                            </div>
+                        </td>
+                        <td class="d-none d-md-table-cell" style="font-family:var(--mono);font-size:.78rem"
+                            th:text="${item.fileSizeFormatted}">0 B</td>
+                        <td class="d-none d-lg-table-cell">
+                            <div class="person-chip">
+                                <div class="person-av"
+                                     style="background:linear-gradient(135deg,var(--cyan),var(--accent2))"
+                                     th:text="${#strings.substring(item.ownerEmail,0,1).toUpperCase()}">A</div>
+                                <span class="person-name" th:text="${item.ownerEmail}">owner@vault.com</span>
+                            </div>
+                        </td>
+                        <td class="d-none d-lg-table-cell" style="font-size:.75rem;color:var(--muted)"
+                            th:text="${item.sharedAt}">—</td>
+                        <td>
+                            <div class="d-flex gap-1">
+                                <a th:href="@{/files/view/{uuid}(uuid=${item.fileUuid})}" class="act-btn view">
+                                    <i class="bi bi-eye"></i> View
+                                </a>
+                                <a th:href="@{/files/download/{uuid}(uuid=${item.fileUuid})}" class="act-btn dl">
+                                    <i class="bi bi-download"></i>
+                                </a>
+                            </div>
+                        </td>
+                    </tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- CARDS mobile -->
+            <div class="file-cards">
+                <div class="fcard" th:each="item : ${sharedWithMe}">
+                    <div class="fcard-head">
+                        <div class="file-icon" style="background:rgba(34,211,238,.07)">
+                            <i class="bi bi-file-earmark-fill" style="color:var(--cyan)"></i>
+                        </div>
+                        <div style="flex:1;min-width:0">
+                            <div class="fname" th:text="${item.fileName}" style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap">file.pdf</div>
+                            <div class="fmeta" th:text="${item.fileSizeFormatted}">0 B</div>
+                        </div>
+                        <span class="status-pill pill-cyan">SHARED</span>
+                    </div>
+                    <div class="fcard-meta">
+                        <div class="person-chip">
+                            <div class="person-av" style="background:linear-gradient(135deg,var(--cyan),var(--accent2))"
+                                 th:text="${#strings.substring(item.ownerEmail,0,1).toUpperCase()}">A</div>
+                            <span class="person-name" th:text="${item.ownerEmail}">owner@vault.com</span>
+                        </div>
+                    </div>
+                    <div class="fcard-actions">
+                        <a th:href="@{/files/view/{uuid}(uuid=${item.fileUuid})}" class="act-btn view"><i class="bi bi-eye"></i> View</a>
+                        <a th:href="@{/files/download/{uuid}(uuid=${item.fileUuid})}" class="act-btn dl"><i class="bi bi-download"></i> Download</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+    </main>
+</div>
+
+<!-- ═══════════════════════════════════════════
+     SHARE MODAL — vault-member email lookup
+     ═══════════════════════════════════════════ -->
+<div class="modal-overlay" id="shareModal" onclick="if(event.target===this)closeShareModal()">
+    <div class="modal-box">
+        <div class="sm-head">
+            <div class="sm-icon"><i class="bi bi-person-plus-fill" style="color:var(--cyan)"></i></div>
+            <div style="flex:1;min-width:0">
+                <div class="sm-title">Share with Vault Member</div>
+                <div class="sm-fname" id="smFileName">—</div>
+            </div>
+            <button class="sm-close" onclick="closeShareModal()"><i class="bi bi-x-lg"></i></button>
+        </div>
+
+        <label style="font-size:.72rem;font-weight:700;color:var(--muted);display:block;margin-bottom:.4rem;letter-spacing:.3px">Vault user email</label>
+        <div class="email-row">
+            <input type="email" id="shareEmailInput" class="email-input"
+                   placeholder="Enter vault member email..."
+                   autocomplete="off" spellcheck="false"
+                   oninput="onEmailChange()"
+                   onkeydown="if(event.key==='Enter'){event.preventDefault();lookupUser();}"/>
+            <button class="lookup-btn" id="lookupBtn" onclick="lookupUser()">
+                <i class="bi bi-search"></i> Find
+            </button>
+        </div>
+
+        <div style="margin-top:.85rem;margin-bottom:.5rem;">
+            <label style="font-size:.72rem;font-weight:700;color:var(--muted);display:block;margin-bottom:.4rem;letter-spacing:.3px">
+                <i class="bi bi-clock" style="color:var(--yellow)"></i> Share expires in
+            </label>
+            <div style="display:flex;gap:.5rem;flex-wrap:wrap;">
+                <button class="expiry-btn active" data-hours="0"   onclick="setExpiry(this)">Never</button>
+                <button class="expiry-btn"         data-hours="1"   onclick="setExpiry(this)">1 hour</button>
+                <button class="expiry-btn"         data-hours="6"   onclick="setExpiry(this)">6 hours</button>
+                <button class="expiry-btn"         data-hours="24"  onclick="setExpiry(this)">1 day</button>
+                <button class="expiry-btn"         data-hours="72"  onclick="setExpiry(this)">3 days</button>
+                <button class="expiry-btn"         data-hours="168" onclick="setExpiry(this)">7 days</button>
+            </div>
+        </div>
+
+        <div class="user-found" id="userFound">
+            <div class="ufc-av" id="ufcAv">H</div>
+            <div>
+                <div class="ufc-name"  id="ufcName">Name</div>
+                <div class="ufc-email" id="ufcEmail">email</div>
+            </div>
+            <div class="ufc-badge"><i class="bi bi-shield-check-fill"></i> Vault Member</div>
+        </div>
+
+        <div class="user-not-found" id="userNotFound">
+            <i class="bi bi-person-x-fill"></i>
+            <span id="nfMsg">No VaultHub account found.</span>
+        </div>
+
+        <div class="share-result" id="shareResult">
+            <i id="srIcon" class="bi bi-check-circle-fill"></i>
+            <span id="srMsg"></span>
+        </div>
+
+        <div class="sm-footer">
+            <button class="btn-cancel" onclick="closeShareModal()">Cancel</button>
+            <button class="btn-send" id="sendBtn" onclick="sendShare()">
+                <i class="bi bi-send-fill"></i> Share
+            </button>
+        </div>
+    </div>
+</div>
+
+<!-- ═══════════════════════════════════════════
+     DELETE CONFIRM MODAL
+     ═══════════════════════════════════════════ -->
+<div class="modal-overlay" id="deleteModal" onclick="if(event.target===this)closeDeleteModal()">
+    <div class="del-modal-box">
+        <div style="display:flex;align-items:center;gap:.6rem;margin-bottom:1.1rem;padding-bottom:.9rem;border-bottom:1px solid rgba(248,113,113,.2)">
+            <div style="width:34px;height:34px;background:rgba(248,113,113,.12);border-radius:8px;display:flex;align-items:center;justify-content:center;flex-shrink:0">
+                <i class="bi bi-trash3-fill" style="color:var(--red)"></i>
+            </div>
+            <div>
+                <div style="font-size:.9rem;font-weight:800;color:#fff">Delete file?</div>
+                <div style="font-size:.7rem;color:var(--muted)">This action <strong style="color:var(--red)">cannot be undone</strong></div>
+            </div>
+        </div>
+        <div style="background:rgba(248,113,113,.06);border:1px solid rgba(248,113,113,.18);border-radius:8px;padding:.6rem .9rem;margin-bottom:1rem;display:flex;align-items:center;gap:.5rem">
+            <i class="bi bi-file-earmark" style="color:#fca5a5;flex-shrink:0"></i>
+            <span id="delFileName" style="font-size:.8rem;font-family:var(--mono);color:#fca5a5;word-break:break-all"></span>
+        </div>
+        <p style="font-size:.77rem;color:var(--muted);margin-bottom:.5rem;line-height:1.7">
+            Type <code id="delFileNameCode" style="color:var(--text);background:var(--bg3);padding:.1rem .4rem;border-radius:4px;border:1px solid var(--border2);font-size:.73rem"></code> to confirm:
+        </p>
+        <input type="text" id="delConfirmInput" placeholder="Type filename to confirm..."
+               autocomplete="off" spellcheck="false" oninput="checkDelMatch()"
+               style="width:100%;background:var(--bg3);border:1px solid var(--border);color:var(--text);padding:.55rem .8rem;border-radius:8px;font-size:.82rem;font-family:var(--mono);outline:none;margin-bottom:1rem;transition:border-color .2s"/>
+        <div style="display:flex;gap:.6rem;justify-content:flex-end">
+            <button onclick="closeDeleteModal()"
+                    style="background:transparent;border:1px solid var(--border2);color:var(--muted);border-radius:8px;padding:.45rem 1rem;font-size:.8rem;font-family:var(--font);font-weight:600;cursor:pointer"
+                    onmouseover="this.style.color='var(--text)'" onmouseout="this.style.color='var(--muted)'">Cancel</button>
+            <button id="confirmDelBtn" disabled
+                    style="background:var(--bg3);color:#555;border:1px solid var(--border);border-radius:8px;padding:.45rem 1.2rem;font-size:.8rem;font-family:var(--font);font-weight:700;cursor:not-allowed;transition:all .2s;display:inline-flex;align-items:center;gap:.35rem">
+                <i class="bi bi-trash3"></i> Delete
+            </button>
+        </div>
+    </div>
+</div>
+
+<nav class="bnav">
+    <a href="/dashboard"><i class="bi bi-grid-1x2-fill"></i>Home</a>
+    <a href="/files" class="active"><i class="bi bi-folder2-open"></i>Files</a>
+    <a href="/chat"><i class="bi bi-chat-dots-fill"></i>Chat</a>
+    <a href="/activity"><i class="bi bi-activity"></i>Activity</a>
+    <a href="/settings"><i class="bi bi-gear-fill"></i>Settings</a>
+</nav>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+<script>
+    // ── Alert auto-dismiss ────────────────────────────────
+    (function(){
+        const p=new URLSearchParams(window.location.search);
+        const sa=document.getElementById('successAlert'), ea=document.getElementById('errorAlert');
+        if(p.get('success')==='uploaded')     {document.getElementById('successMsg').textContent='✅ File uploaded successfully!';sa.style.display='flex';}
+        if(p.get('success')==='deleted')      {document.getElementById('successMsg').textContent='🗑️ File deleted.';sa.style.display='flex';}
+        if(p.get('success')==='renamed')      {document.getElementById('successMsg').textContent='✏️ File renamed.';sa.style.display='flex';}
+        if(p.get('error')==='empty')          {document.getElementById('errorMsg').textContent='Please select a file first.';ea.style.display='flex';}
+        if(p.get('error')==='failed')         {document.getElementById('errorMsg').textContent='Upload failed. Try again.';ea.style.display='flex';}
+        if(p.get('error')==='deletefailed')   {document.getElementById('errorMsg').textContent='Delete failed. Try again.';ea.style.display='flex';}
+        if(p.get('error')==='noaccess')       {document.getElementById('errorMsg').textContent='You do not have access to that file.';ea.style.display='flex';}
+        if(sa.style.display==='flex'||ea.style.display==='flex')
+            setTimeout(()=>{sa.style.display='none';ea.style.display='none';},4000);
+        if(p.toString()) window.history.replaceState({},'',window.location.pathname);
+    })();
+
+    // ── Search / Filter ────────────────────────────────────
+    function filterFiles(){
+        const q=document.getElementById('searchInput').value.toLowerCase().trim();
+        document.getElementById('clearSearch').style.display=q?'inline':'none';
+        let visible=0;
+        document.querySelectorAll('#fileTable tbody tr').forEach(r=>{
+            const show=(r.dataset.name||'').toLowerCase().includes(q);
+            r.style.display=show?'':'none';
+            if(show)visible++;
+        });
+        document.querySelectorAll('#mobileCards .fcard').forEach(c=>{
+            c.style.display=(c.dataset.name||'').toLowerCase().includes(q)?'':'none';
+        });
+        const nr=document.getElementById('noResults');
+        const total=document.querySelectorAll('#fileTable tbody tr').length;
+        if(nr)nr.style.display=(total>0&&visible===0)?'block':'none';
+        const lbl=document.getElementById('fileCountLabel');
+        if(lbl)lbl.textContent=q?visible+' of '+total+' files':total+' files';
+    }
+    function clearSearch(){
+        document.getElementById('searchInput').value='';
+        filterFiles();
+        document.getElementById('searchInput').focus();
+    }
+
+    // ── Sort ──────────────────────────────────────────────
+    let currentSort='name',sortAsc=true;
+    function sortFiles(by){
+        if(currentSort===by)sortAsc=!sortAsc;else{currentSort=by;sortAsc=true;}
+        document.querySelectorAll('.sort-btn').forEach(b=>b.classList.remove('active'));
+        document.getElementById('sort'+by.charAt(0).toUpperCase()+by.slice(1)).classList.add('active');
+        const tbody=document.querySelector('#fileTable tbody');
+        if(!tbody)return;
+        Array.from(tbody.querySelectorAll('tr')).sort((a,b)=>{
+            if(by==='name')return sortAsc?(a.dataset.name||'').localeCompare(b.dataset.name||''):(b.dataset.name||'').localeCompare(a.dataset.name||'');
+            if(by==='size')return sortAsc?parseInt(a.dataset.size||0)-parseInt(b.dataset.size||0):parseInt(b.dataset.size||0)-parseInt(a.dataset.size||0);
+            if(by==='date')return sortAsc?new Date(a.dataset.date||0)-new Date(b.dataset.date||0):new Date(b.dataset.date||0)-new Date(a.dataset.date||0);
+            return 0;
+        }).forEach(r=>tbody.appendChild(r));
+        filterFiles();
+    }
+
+    // ══════════════════════════════════════════════════════
+    //  SHARE MODAL
+    // ══════════════════════════════════════════════════════
+    let shareUuid='';
+    let selectedExpiryHours = 0;
+
+    function setExpiry(btn) {
+        document.querySelectorAll('.expiry-btn').forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        selectedExpiryHours = parseInt(btn.dataset.hours);
+    }
+
+    function openShareModal(uuid,fileName){
+        shareUuid=uuid;
+        selectedExpiryHours = 0;
+        document.querySelectorAll('.expiry-btn').forEach(b => b.classList.remove('active'));
+        const neverBtn = document.querySelector('.expiry-btn[data-hours="0"]');
+        if (neverBtn) neverBtn.classList.add('active');
+        document.getElementById('smFileName').textContent=fileName;
+        document.getElementById('shareEmailInput').value='';
+        document.getElementById('shareEmailInput').className='email-input';
+        document.getElementById('userFound').classList.remove('show');
+        document.getElementById('userNotFound').classList.remove('show');
+        document.getElementById('shareResult').classList.remove('show','ok','err');
+        resetSendBtn();
+        document.getElementById('shareModal').classList.add('show');
+        setTimeout(()=>document.getElementById('shareEmailInput').focus(),80);
+    }
+    function closeShareModal(){
+        document.getElementById('shareModal').classList.remove('show');
+        shareUuid='';
+    }
+    function onEmailChange(){
+        document.getElementById('userFound').classList.remove('show');
+        document.getElementById('userNotFound').classList.remove('show');
+        document.getElementById('shareResult').classList.remove('show','ok','err');
+        document.getElementById('shareEmailInput').className='email-input';
+        resetSendBtn();
+    }
+    function resetSendBtn(){
+        const btn=document.getElementById('sendBtn');
+        btn.classList.remove('ready');
+        btn.disabled=true;
+    }
+    function lookupUser(){
+        const email=document.getElementById('shareEmailInput').value.trim();
+        if(!email)return;
+        const lb=document.getElementById('lookupBtn');
+        lb.disabled=true;lb.innerHTML='<i class="bi bi-hourglass-split"></i>';
+        document.getElementById('userFound').classList.remove('show');
+        document.getElementById('userNotFound').classList.remove('show');
+        document.getElementById('shareResult').classList.remove('show','ok','err');
+
+        fetch('/api/share/lookup?email='+encodeURIComponent(email))
+            .then(r=>r.json())
+            .then(data=>{
+                lb.disabled=false;lb.innerHTML='<i class="bi bi-search"></i> Find';
+                if(data.found){
+                    document.getElementById('ufcAv').textContent=data.fullName.charAt(0).toUpperCase();
+                    document.getElementById('ufcName').textContent=data.fullName;
+                    document.getElementById('ufcEmail').textContent=data.email;
+                    document.getElementById('userFound').classList.add('show');
+                    document.getElementById('shareEmailInput').className='email-input valid';
+                    const btn=document.getElementById('sendBtn');
+                    btn.classList.add('ready');btn.disabled=false;
+                } else {
+                    document.getElementById('nfMsg').textContent='No VaultHub account found for "'+email+'".';
+                    document.getElementById('userNotFound').classList.add('show');
+                    document.getElementById('shareEmailInput').className='email-input invalid';
+                    resetSendBtn();
+                }
+            })
+            .catch(()=>{
+                lb.disabled=false;lb.innerHTML='<i class="bi bi-search"></i> Find';
+                document.getElementById('nfMsg').textContent='Could not reach vault. Try again.';
+                document.getElementById('userNotFound').classList.add('show');
+                resetSendBtn();
+            });
+    }
+    function sendShare(){
+        const btn=document.getElementById('sendBtn');
+        if(btn.disabled||!shareUuid)return;
+        const email=document.getElementById('shareEmailInput').value.trim();
+        btn.disabled=true;btn.innerHTML='<i class="bi bi-hourglass-split"></i> Sharing...';
+        const fd=new FormData();
+        fd.append('fileUuid',shareUuid);
+        fd.append('recipientEmail',email);
+        fd.append('expiryHours', selectedExpiryHours);
+        fetch('/files/share/send',{method:'POST',body:fd})
+            .then(r=>r.json())
+            .then(data=>{
+                const res=document.getElementById('shareResult');
+                res.classList.remove('ok','err');
+                if(data.success){
+                    document.getElementById('srIcon').className='bi bi-check-circle-fill';
+                    const expiryLabel = selectedExpiryHours === 0 ? 'No expiry' :
+                        selectedExpiryHours < 24 ? `Expires in ${selectedExpiryHours}h` :
+                        `Expires in ${selectedExpiryHours/24}d`;
+                    document.getElementById('srMsg').textContent='✅ '+data.message+' · '+expiryLabel;
+                    res.classList.add('show','ok');
+                    document.getElementById('userFound').classList.remove('show');
+                    document.getElementById('shareEmailInput').value='';
+                    document.getElementById('shareEmailInput').className='email-input';
+                    resetSendBtn();
+                } else {
+                    document.getElementById('srIcon').className='bi bi-exclamation-circle-fill';
+                    document.getElementById('srMsg').textContent=data.message;
+                    res.classList.add('show','err');
+                    btn.classList.add('ready');btn.disabled=false;
+                    btn.innerHTML='<i class="bi bi-send-fill"></i> Share';
+                }
+            })
+            .catch(()=>{
+                document.getElementById('srIcon').className='bi bi-exclamation-circle-fill';
+                document.getElementById('srMsg').textContent='Network error. Try again.';
+                document.getElementById('shareResult').classList.add('show','err');
+                btn.classList.add('ready');btn.disabled=false;
+                btn.innerHTML='<i class="bi bi-send-fill"></i> Share';
+            });
+    }
+
+    // ══════════════════════════════════════════════════════
+    //  DELETE CONFIRM MODAL
+    // ══════════════════════════════════════════════════════
+    let pendingDelForm=null,pendingDelName='';
+    function confirmDelete(e,form){
+        e.preventDefault();
+        pendingDelForm=form;pendingDelName=form.dataset.filename||'this file';
+        document.getElementById('delFileName').textContent=pendingDelName;
+        document.getElementById('delFileNameCode').textContent=pendingDelName;
+        const input=document.getElementById('delConfirmInput'),btn=document.getElementById('confirmDelBtn');
+        input.value='';input.style.borderColor='var(--border)';
+        btn.disabled=true;btn.style.background='var(--bg3)';btn.style.color='#555';btn.style.borderColor='var(--border)';btn.style.cursor='not-allowed';
+        btn.onclick=()=>{if(!btn.disabled&&pendingDelForm)pendingDelForm.submit();};
+        document.getElementById('deleteModal').classList.add('show');
+        setTimeout(()=>input.focus(),80);
+        return false;
+    }
+    function checkDelMatch(){
+        const input=document.getElementById('delConfirmInput'),btn=document.getElementById('confirmDelBtn');
+        const match=input.value===pendingDelName;
+        input.style.borderColor=match?'var(--red)':(input.value.length?'rgba(248,113,113,.35)':'var(--border)');
+        btn.disabled=!match;
+        btn.style.background=match?'var(--red)':'var(--bg3)';
+        btn.style.color=match?'#fff':'#555';
+        btn.style.borderColor=match?'var(--red)':'var(--border)';
+        btn.style.cursor=match?'pointer':'not-allowed';
+    }
+    function closeDeleteModal(){
+        document.getElementById('deleteModal').classList.remove('show');
+        document.getElementById('delConfirmInput').value='';
+        document.getElementById('delConfirmInput').style.borderColor='var(--border)';
+        pendingDelForm=null;pendingDelName='';
+    }
+    document.getElementById('delConfirmInput').addEventListener('keydown',function(e){
+        if(e.key==='Enter'&&this.value===pendingDelName&&pendingDelForm)pendingDelForm.submit();
+    });
+    document.addEventListener('keydown',e=>{
+        if(e.key==='Escape'){closeShareModal();closeDeleteModal();}
+    });
+</script>
+<script>
+// Format raw ISO timestamps to readable dates
+document.querySelectorAll('.upload-date').forEach(el => {
+    const raw = el.getAttribute('data-date');
+    if (!raw) return;
+    try {
+        const d = new Date(raw);
+        const now = new Date();
+        const diff = now - d;
+        const mins = Math.floor(diff / 60000);
+        const hours = Math.floor(diff / 3600000);
+        const days = Math.floor(diff / 86400000);
+        if (mins < 1)       el.textContent = 'Just now';
+        else if (mins < 60) el.textContent = mins + 'm ago';
+        else if (hours < 24)el.textContent = hours + 'h ago';
+        else if (days < 7)  el.textContent = days + 'd ago';
+        else el.textContent = d.toLocaleDateString('en-GB', {day:'numeric',month:'short',year:'numeric'});
+    } catch(e) { /* keep raw */ }
+});
+
+    // ── RENAME MODAL ──────────────────────────
+    let _renameUuid = null;
+
+    function openRenameModal(uuid, currentName) {
+        _renameUuid = uuid;
+        document.getElementById('renameCurrentName').textContent = currentName;
+        const input = document.getElementById('renameInput');
+        input.value = currentName;
+        document.getElementById('renameError').style.display = 'none';
+        document.getElementById('renameModal').classList.add('show');
+        setTimeout(() => { input.focus(); input.select(); }, 120);
+    }
+
+    function closeRenameModal() {
+        document.getElementById('renameModal').classList.remove('show');
+        _renameUuid = null;
+    }
+
+    async function submitRename() {
+        const newName = document.getElementById('renameInput').value.trim();
+        const errEl   = document.getElementById('renameError');
+        const saveBtn = document.getElementById('renameSaveBtn');
+
+        if (!newName) {
+            errEl.textContent = 'Name cannot be empty.';
+            errEl.style.display = 'block';
+            return;
+        }
+
+        saveBtn.disabled = true;
+        saveBtn.innerHTML = '<i class="bi bi-hourglass-split"></i> Saving...';
+
+        try {
+            const params = new URLSearchParams({ newName });
+            const res  = await fetch(`/files/rename/${_renameUuid}`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+                body: params
+            });
+            const data = await res.json();
+
+            if (data.success) {
+                // Update name in the table row and card without full reload
+                document.querySelectorAll(`[data-uuid="${_renameUuid}"]`).forEach(el => {
+                    el.dataset.name = data.newName;
+                });
+                // Update filename text nodes in table
+                document.querySelectorAll('.file-name-cell').forEach(el => {
+                    if (el.closest('tr')?.querySelector(`[data-uuid="${_renameUuid}"]`)) {
+                        el.textContent = data.newName;
+                    }
+                });
+                // Refresh page to be safe and show success
+                window.location.href = '/files?success=renamed';
+            } else {
+                errEl.textContent = data.error || 'Rename failed.';
+                errEl.style.display = 'block';
+                saveBtn.disabled = false;
+                saveBtn.innerHTML = '<i class="bi bi-check-lg"></i> Save';
+            }
+        } catch(e) {
+            errEl.textContent = 'Network error. Please try again.';
+            errEl.style.display = 'block';
+            saveBtn.disabled = false;
+            saveBtn.innerHTML = '<i class="bi bi-check-lg"></i> Save';
+        }
+    }
+
+</script>
+
+<!-- ══ RENAME MODAL ══ -->
+<div class="modal-overlay" id="renameModal" onclick="if(event.target===this)closeRenameModal()">
+    <div class="modal-box" style="max-width:420px">
+        <div class="modal-head">
+            <div style="display:flex;align-items:center;gap:.6rem">
+                <div style="width:34px;height:34px;border-radius:9px;background:rgba(251,191,36,.1);display:flex;align-items:center;justify-content:center">
+                    <i class="bi bi-pencil-fill" style="color:var(--yellow)"></i>
+                </div>
+                <div>
+                    <div style="font-size:.9rem;font-weight:700;color:#fff">Rename File</div>
+                    <div style="font-size:.7rem;color:var(--muted)" id="renameCurrentName">filename</div>
+                </div>
+            </div>
+            <button class="modal-close" onclick="closeRenameModal()">✕</button>
+        </div>
+        <div style="padding:1.2rem 1.3rem">
+            <label style="font-size:.7rem;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;display:block;margin-bottom:.4rem">New Name</label>
+            <input type="text" id="renameInput"
+                   style="width:100%;background:var(--bg3);border:1px solid var(--border2);border-radius:8px;padding:.65rem .85rem;color:var(--text);font-size:.88rem;font-family:var(--font);outline:none;transition:border-color .2s"
+                   onfocus="this.style.borderColor='var(--accent)'"
+                   onblur="this.style.borderColor='var(--border2)'"
+                   onkeydown="if(event.key==='Enter')submitRename()"
+                   placeholder="Enter new file name"/>
+            <div id="renameError" style="display:none;margin-top:.5rem;font-size:.75rem;color:var(--red)"></div>
+        </div>
+        <div style="padding:.9rem 1.3rem;border-top:1px solid var(--border);display:flex;gap:.6rem;justify-content:flex-end">
+            <button onclick="closeRenameModal()"
+                    style="background:transparent;border:1px solid var(--border2);color:var(--muted);padding:.5rem 1.1rem;border-radius:8px;font-size:.82rem;font-weight:600;font-family:var(--font);cursor:pointer">
+                Cancel
+            </button>
+            <button onclick="submitRename()" id="renameSaveBtn"
+                    style="background:var(--accent);color:#fff;border:none;padding:.5rem 1.3rem;border-radius:8px;font-size:.82rem;font-weight:700;font-family:var(--font);cursor:pointer;display:flex;align-items:center;gap:.4rem;transition:all .2s">
+                <i class="bi bi-check-lg"></i> Save
+            </button>
+        </div>
+    </div>
+</div>
+
+<!-- MOBILE BOTTOM SHEET -->
+<div class="fcard-sheet-overlay" id="sheetOverlay" onclick="closeSheet()"></div>
+<div class="fcard-sheet" id="fileSheet">
+    <div class="sheet-handle"></div>
+    <div class="sheet-fname" id="sheetFname">filename.pdf</div>
+    <div class="sheet-actions">
+        <a class="sheet-btn" id="sheetView" href="#"><i class="bi bi-eye"></i> View</a>
+        <a class="sheet-btn" id="sheetDl" href="#"><i class="bi bi-download"></i> Download</a>
+        <button class="sheet-btn" id="sheetRename" onclick="sheetRename()"><i class="bi bi-pencil"></i> Rename</button>
+        <button class="sheet-btn" id="sheetShare" onclick="sheetShareFile()"><i class="bi bi-person-plus"></i> Share</button>
+        <button class="sheet-btn danger" id="sheetDel" onclick="sheetDelete()"><i class="bi bi-trash3"></i> Delete</button>
+    </div>
+</div>
+
+<script>
+let _sheetCard = null;
+function openSheet(card) {
+    _sheetCard = card;
+    document.getElementById('sheetFname').textContent = card.dataset.name;
+    document.getElementById('sheetView').href  = card.dataset.view;
+    document.getElementById('sheetDl').href    = card.dataset.dl;
+    document.getElementById('sheetOverlay').classList.add('open');
+    document.getElementById('fileSheet').classList.add('open');
+    document.body.style.overflow = 'hidden';
+}
+function closeSheet(then) {
+    document.getElementById('sheetOverlay').classList.remove('open');
+    document.getElementById('fileSheet').classList.remove('open');
+    document.body.style.overflow = '';
+    // Wait for slide-out animation (250ms) then run callback, then clear card
+    if (then) {
+        setTimeout(() => { then(); _sheetCard = null; }, 270);
+    } else {
+        setTimeout(() => { _sheetCard = null; }, 270);
+    }
+}
+function sheetRename() {
+    const card = _sheetCard;
+    closeSheet(() => {
+        if (card) openRenameModal(card.dataset.uuid, card.dataset.name);
+    });
+}
+function sheetShareFile() {
+    const card = _sheetCard;
+    closeSheet(() => {
+        if (card) openShareModal(card.dataset.uuid, card.dataset.name);
+    });
+}
+function sheetDelete() {
+    const card = _sheetCard;
+    closeSheet(() => {
+        if (card) {
+            const form = document.createElement('form');
+            form.method = 'post';
+            form.action = card.dataset.del;
+            form.dataset.filename = card.dataset.name;
+            form.onsubmit = (e) => confirmDelete(e, form);
+            document.body.appendChild(form);
+            form.dispatchEvent(new Event('submit', {cancelable:true, bubbles:true}));
+        }
+    });
+}
+</script>
+</body>
+</html>

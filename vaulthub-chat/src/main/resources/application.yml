@@ -1,0 +1,39 @@
+server:
+  port: 8083
+  forward-headers-strategy: framework   # CRITICAL - same as file service, trusts X-Forwarded headers from gateway
+
+spring:
+  application:
+    name: vaulthub-chat
+
+  datasource:
+    url: jdbc:mysql://localhost:3306/vaulthub_chat?createDatabaseIfNotExist=true
+    username: root
+    password: harshad@123#
+    driver-class-name: com.mysql.cj.jdbc.Driver
+
+  jpa:
+    hibernate:
+      ddl-auto: update
+    show-sql: true
+
+  data:
+    redis:
+      host: merry-impala-66504.upstash.io
+      port: 6379
+      password: gQAAAAAAAQPIAAIncDI0MjY1N2JhODNmNjg0ODg1OTJkZDliNzMxNGY0ZTVlY3AyNjY1MDQ
+      ssl:
+        enabled: true
+
+  session:
+    store-type: redis
+    timeout: 86400
+    redis:
+      namespace: vaulthub:session   # MUST match auth service namespace exactly
+
+  thymeleaf:
+    cache: false
+
+eureka:
+  client:
+    enabled: false

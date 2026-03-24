@@ -1,0 +1,466 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8"/>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+    <title>Upload — VaultHub</title>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet"/>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet"/>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css" rel="stylesheet"/>
+    <style>
+
+        /* ── FLUID TYPOGRAPHY SCALE ──────────────────────────────
+           Root font-size scales 13px→16px across 360px→1280px.
+           Every rem unit scales automatically. ── */
+        html { font-size: clamp(13px, 0.8rem + 0.8vw, 16px); }
+        @media(max-width:480px) {
+            .page-header h4,.ph-title { font-size: clamp(1rem, 4vw, 1.2rem) !important; }
+            .sp-val,.sc-val,.as-val,.mobile-stat-val { font-size: clamp(.9rem, 3.5vw, 1.2rem) !important; }
+            .fname,.fcard-name,.log-action { font-size: clamp(.78rem, 3.2vw, .88rem) !important; }
+            .fmeta,.fcard-size,.log-file,.log-time { font-size: clamp(.62rem, 2.5vw, .72rem) !important; }
+            .nav-label,.sp-lbl,.sc-lbl,.as-lbl { font-size: clamp(.5rem, 2vw, .6rem) !important; }
+            .bnav a { font-size: clamp(.48rem, 1.8vw, .54rem) !important; }
+            .act-btn,.sheet-btn { font-size: clamp(.74rem, 3vw, .84rem) !important; }
+            .modal-title { font-size: clamp(.85rem, 3.5vw, .95rem) !important; }
+            .chat-header-info .name { font-size: clamp(.8rem, 3.5vw, .9rem) !important; }
+            .msg-bubble { font-size: clamp(.78rem, 3.2vw, .85rem) !important; }
+        }
+        /* ── FLUID TYPOGRAPHY SCALE ─────────────────────────────
+           Root font-size scales from 13px (360px screen)
+           to 16px (1280px screen) using clamp + viewport units.
+           Every rem unit in the app scales automatically.
+           ──────────────────────────────────────────────────── */
+        
+
+        /* Fine-tune specific text roles at small screens */
+        @media(max-width:480px) {
+            .page-header h4, .ph-title { font-size: clamp(1rem, 4vw, 1.2rem) !important; }
+            .sp-val, .sc-val, .as-val, .mobile-stat-val { font-size: clamp(.9rem, 3.5vw, 1.2rem) !important; }
+            .fname, .fcard-name, .log-action { font-size: clamp(.78rem, 3.2vw, .88rem) !important; }
+            .fmeta, .fcard-size, .log-file, .log-time { font-size: clamp(.62rem, 2.5vw, .72rem) !important; }
+            .nav-label, .sp-lbl, .sc-lbl, .as-lbl { font-size: clamp(.5rem, 2vw, .6rem) !important; }
+            .bnav a { font-size: clamp(.48rem, 1.8vw, .54rem) !important; }
+            .act-btn, .sheet-btn { font-size: clamp(.74rem, 3vw, .84rem) !important; }
+            .modal-title { font-size: clamp(.85rem, 3.5vw, .95rem) !important; }
+            .chat-header-info .name { font-size: clamp(.8rem, 3.5vw, .9rem) !important; }
+            .msg-bubble { font-size: clamp(.78rem, 3.2vw, .85rem) !important; }
+        }
+
+        :root{--bg:#080810;--bg2:#0e0e1a;--bg3:#13131f;--bg4:#1a1a2e;--border:#1e1e32;--border2:#252540;--accent:#6366f1;--accent2:#818cf8;--accent3:#a5b4fc;--cyan:#22d3ee;--green:#34d399;--yellow:#fbbf24;--red:#f87171;--text:#e8e8f5;--muted:#52526e;--muted2:#3a3a55;--font:'Plus Jakarta Sans',sans-serif;--mono:'JetBrains Mono',monospace;}
+        *{margin:0;padding:0;box-sizing:border-box;}
+        html{height:100%;overflow:hidden;}
+        body{font-family:var(--font);background:var(--bg);color:var(--text);height:100vh;overflow:hidden;}
+        body::before{content:'';position:fixed;inset:0;pointer-events:none;z-index:0;background:radial-gradient(ellipse 600px 400px at 20% 10%,rgba(99,102,241,.06) 0%,transparent 70%),radial-gradient(ellipse 400px 400px at 80% 80%,rgba(34,211,238,.04) 0%,transparent 70%);}
+        .topbar{position:sticky;top:0;z-index:100;background:rgba(8,8,16,.92);backdrop-filter:blur(16px);border-bottom:1px solid var(--border);padding:0 1.5rem;height:52px;display:flex;align-items:center;justify-content:space-between;}
+        .brand{font-size:1.05rem;font-weight:800;letter-spacing:-.3px;text-decoration:none;display:flex;align-items:center;gap:.4rem;}
+        .brand-icon{font-size:1.1rem;}.brand-text{color:var(--accent3);}.brand-text span{color:#fff;}
+        .topbar-right{display:flex;align-items:center;gap:.6rem;}
+        .user-pill{display:flex;align-items:center;gap:.5rem;background:var(--bg3);border:1px solid var(--border2);border-radius:24px;padding:.22rem .8rem .22rem .28rem;}
+        .av{width:26px;height:26px;border-radius:50%;background:linear-gradient(135deg,var(--accent),var(--cyan));display:flex;align-items:center;justify-content:center;font-size:.7rem;font-weight:800;color:#fff;flex-shrink:0;}
+        .av-name{font-size:.78rem;font-weight:600;}
+        .logout-btn{background:transparent;border:1px solid var(--border2);color:var(--muted);padding:.25rem .65rem;border-radius:7px;font-size:.74rem;font-family:var(--font);text-decoration:none;display:flex;align-items:center;gap:.28rem;transition:all .2s;}
+        .logout-btn:hover{border-color:var(--red);color:var(--red);}
+        .layout{display:flex;height:calc(100vh - 52px);position:relative;z-index:1;overflow:hidden;}
+        .sidebar{width:210px;flex-shrink:0;background:var(--bg2);border-right:1px solid var(--border);padding:1.2rem .7rem;display:flex;flex-direction:column;height:100%;overflow-y:auto;}
+        .nav-section{margin-bottom:.3rem;}
+        .nav-label{font-size:.55rem;font-weight:700;letter-spacing:2px;text-transform:uppercase;color:var(--muted2);padding:.6rem .6rem .3rem;}
+        .nav-item{display:flex;align-items:center;gap:.6rem;padding:.48rem .65rem;border-radius:8px;text-decoration:none;color:var(--muted);font-size:.8rem;font-weight:500;transition:all .15s;margin-bottom:1px;}
+        .nav-item:hover{background:var(--bg3);color:var(--text);}
+        .nav-item.active{background:rgba(99,102,241,.12);color:var(--accent3);border-left:2px solid var(--accent);padding-left:calc(.65rem - 2px);}
+        .nav-item i{font-size:.85rem;width:16px;text-align:center;flex-shrink:0;}
+        .sidebar-footer{margin-top:auto;padding-top:1rem;border-top:1px solid var(--border);}
+        .sf-text{font-size:.62rem;color:var(--muted2);text-align:center;line-height:1.6;font-family:var(--mono);}
+        .main{flex:1;padding:1.5rem;overflow-y:auto;height:100%;}
+        .page-head{margin-bottom:1.4rem;}
+        .page-head h4{font-size:1.15rem;font-weight:800;color:#fff;letter-spacing:-.3px;margin:0 0 .2rem;}
+        .page-head p{font-size:.76rem;color:var(--muted);margin:0;}
+        .alert-err{background:rgba(248,113,113,.08);border:1px solid rgba(248,113,113,.2);color:#fca5a5;border-radius:9px;padding:.7rem 1rem;font-size:.81rem;display:flex;align-items:center;gap:.5rem;margin-bottom:1rem;}
+
+        /* ── UPLOAD CARD ── */
+        .upload-card{background:var(--bg2);border:1px solid var(--border);border-radius:14px;overflow:hidden;max-width:660px;}
+        .uc-head{padding:1rem 1.3rem;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:.5rem;}
+        .uc-head h5{font-size:.9rem;font-weight:700;color:#fff;margin:0;}
+        .uc-body{padding:1.4rem 1.3rem;}
+
+        /* ── DROPZONE ── */
+        .dropzone{
+            border:2px dashed var(--border2);border-radius:14px;
+            padding:3rem 1.5rem;text-align:center;cursor:pointer;
+            transition:all .25s;position:relative;background:var(--bg3);
+            overflow:hidden;
+        }
+        .dropzone::before{
+            content:'';position:absolute;inset:0;
+            background:radial-gradient(circle at 50% 60%,rgba(99,102,241,.06) 0%,transparent 70%);
+            opacity:0;transition:opacity .3s;
+        }
+        .dropzone:hover::before,.dropzone.drag-over::before{opacity:1;}
+        .dropzone:hover,.dropzone.drag-over{
+            border-color:var(--accent);
+            background:rgba(99,102,241,.05);
+            box-shadow:0 0 0 4px rgba(99,102,241,.08);
+        }
+        .dropzone.drag-over{
+            border-color:var(--cyan);
+            background:rgba(34,211,238,.04);
+            box-shadow:0 0 0 4px rgba(34,211,238,.08);
+            transform:scale(1.01);
+        }
+        .dropzone input[type=file]{position:absolute;inset:0;width:100%;height:100%;opacity:0;cursor:pointer;z-index:2;}
+
+        /* Dropzone content */
+        .dz-content{position:relative;z-index:1;transition:all .25s;}
+        .dz-icon-wrap{width:64px;height:64px;background:rgba(99,102,241,.1);border:1px solid rgba(99,102,241,.2);border-radius:18px;display:flex;align-items:center;justify-content:center;margin:0 auto .85rem;font-size:1.6rem;transition:all .25s;}
+        .dropzone:hover .dz-icon-wrap,.dropzone.drag-over .dz-icon-wrap{background:rgba(99,102,241,.18);transform:scale(1.06);}
+        .dz-title{font-size:.92rem;font-weight:700;color:#fff;margin-bottom:.3rem;}
+        .dz-sub{font-size:.76rem;color:var(--muted);line-height:1.6;}
+        .dz-or{display:inline-flex;align-items:center;gap:.5rem;margin:.7rem 0;font-size:.72rem;color:var(--muted2);}
+        .dz-or::before,.dz-or::after{content:'';flex:1;height:1px;background:var(--border2);width:40px;}
+        .dz-browse{display:inline-block;background:rgba(99,102,241,.1);border:1px solid rgba(99,102,241,.25);color:var(--accent3);padding:.38rem 1.1rem;border-radius:8px;font-size:.78rem;font-weight:700;transition:all .2s;}
+        .dropzone:hover .dz-browse{background:rgba(99,102,241,.2);}
+        .dz-limits{display:flex;gap:.6rem;justify-content:center;margin-top:.7rem;flex-wrap:wrap;}
+        .dz-chip{font-size:.62rem;font-family:var(--mono);background:var(--bg4);border:1px solid var(--border2);color:var(--muted);padding:.15rem .55rem;border-radius:20px;}
+
+        /* Drag-over overlay text */
+        .drag-text{display:none;position:absolute;inset:0;z-index:3;background:rgba(34,211,238,.06);border-radius:12px;align-items:center;justify-content:center;flex-direction:column;gap:.5rem;}
+        .dropzone.drag-over .drag-text{display:flex;}
+        .dropzone.drag-over .dz-content{opacity:.3;}
+        .drag-text-icon{font-size:2.5rem;}
+        .drag-text-label{font-size:1rem;font-weight:800;color:var(--cyan);}
+
+        /* ── FILE PREVIEW ── */
+        .file-preview{display:none;margin-top:1rem;background:var(--bg);border:1px solid var(--border2);border-radius:11px;padding:.9rem 1rem;align-items:center;gap:.75rem;animation:fadeUp .3s ease;}
+        @keyframes fadeUp{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
+        .fp-icon{font-size:1.5rem;flex-shrink:0;}
+        .fp-name{font-size:.85rem;font-weight:600;color:#fff;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+        .fp-size{font-size:.7rem;color:var(--muted);font-family:var(--mono);margin-top:2px;}
+        .fp-clear{background:transparent;border:none;color:var(--muted);font-size:1rem;cursor:pointer;margin-left:auto;flex-shrink:0;padding:.2rem;transition:color .15s;}
+        .fp-clear:hover{color:var(--red);}
+
+        /* ── PROGRESS ── */
+        .progress-wrap{display:none;margin-top:1rem;}
+        .prog-label{display:flex;justify-content:space-between;font-size:.72rem;color:var(--muted);margin-bottom:.4rem;}
+        .prog-track{height:7px;background:var(--bg3);border-radius:10px;overflow:hidden;position:relative;}
+        .prog-fill{height:100%;border-radius:10px;background:linear-gradient(90deg,var(--accent),var(--accent2),var(--cyan));width:0%;transition:width .3s;box-shadow:0 0 8px rgba(99,102,241,.4);}
+        .prog-shine{position:absolute;top:0;left:-100%;width:60%;height:100%;background:linear-gradient(90deg,transparent,rgba(255,255,255,.2),transparent);animation:shine 1.5s infinite;}
+        @keyframes shine{to{left:200%}}
+
+        /* ── SUBMIT BUTTON ── */
+        .div-line{height:1px;background:var(--border);margin:1.2rem 0;}
+        .btn-sub{width:100%;background:var(--accent);color:#fff;border:none;border-radius:10px;padding:.85rem;font-size:.9rem;font-weight:700;font-family:var(--font);cursor:pointer;transition:all .25s;box-shadow:0 2px 20px rgba(99,102,241,.35);display:flex;align-items:center;justify-content:center;gap:.5rem;position:relative;overflow:hidden;}
+        .btn-sub::after{content:'';position:absolute;inset:0;background:linear-gradient(135deg,transparent 40%,rgba(255,255,255,.05));pointer-events:none;}
+        .btn-sub:hover:not(:disabled){background:#5254cc;transform:translateY(-1px);box-shadow:0 6px 24px rgba(99,102,241,.45);}
+        .btn-sub:disabled{background:var(--bg4);color:var(--muted2);cursor:not-allowed;transform:none;box-shadow:none;}
+
+        /* ── INFO CARDS ── */
+        .info-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:.7rem;margin-top:1.3rem;}
+        .info-card{background:var(--bg3);border:1px solid var(--border2);border-radius:10px;padding:.85rem;transition:all .15s;}
+        .info-card:hover{border-color:var(--border);background:var(--bg4);}
+        .ic-icon{font-size:1.15rem;margin-bottom:.4rem;display:block;}
+        .ic-title{font-size:.79rem;font-weight:700;color:#fff;margin-bottom:.2rem;}
+        .ic-sub{font-size:.7rem;color:var(--muted);line-height:1.55;}
+
+        /* MOBILE */
+        .bnav{display:none;position:fixed;bottom:0;left:0;right:0;background:rgba(8,8,16,.97);border-top:1px solid var(--border);backdrop-filter:blur(12px);padding:.4rem 0 env(safe-area-inset-bottom,.2rem);z-index:200;}
+        .bnav a{flex:1;display:flex;flex-direction:column;align-items:center;gap:.1rem;text-decoration:none;color:var(--muted2);font-size:.52rem;font-weight:700;letter-spacing:.5px;text-transform:uppercase;transition:color .2s;padding:.2rem 0;}
+        .bnav a i{font-size:1.1rem;}.bnav a.active,.bnav a:hover{color:var(--accent3);}
+        @media(max-width:768px){.sidebar{display:none;}.main{padding:.85rem;padding-bottom:74px;}.bnav{display:flex;}.dropzone{padding:2rem 1rem;}.info-grid{grid-template-columns:1fr;}}
+        @media(max-width:580px){.topbar{padding:0 1rem}.av-name{display:none}.info-grid{grid-template-columns:repeat(2,1fr)}}
+    </style>
+</head>
+<body>
+
+<header class="topbar">
+    <a href="/dashboard" class="brand">
+        <span class="brand-icon">🗂️</span>
+        <span class="brand-text">Vault<span>Hub</span></span>
+    </a>
+    <div class="topbar-right">
+        <div class="user-pill">
+            <div class="av" style="overflow:hidden;padding:0;">
+                <img th:if="${profilePhoto != null and !profilePhoto.isEmpty()}" th:src="${profilePhoto}" style="width:100%;height:100%;object-fit:cover;border-radius:50%;" alt="avatar"/>
+                <span th:if="${profilePhoto == null or profilePhoto.isEmpty()}" th:text="${#strings.substring(displayName,0,1).toUpperCase()}">H</span>
+            </div>
+            <span class="av-name" th:text="${displayName}">Harshad</span>
+        </div>
+        <a href="/logout" class="logout-btn">
+            <i class="bi bi-box-arrow-right"></i>
+            <span class="d-none d-sm-inline">Logout</span>
+        </a>
+    </div>
+</header>
+
+<div class="layout">
+    <aside class="sidebar">
+        <div class="nav-section">
+            <div class="nav-label">Main</div>
+            <a href="/dashboard" class="nav-item"><i class="bi bi-grid-1x2-fill"></i> Dashboard</a>
+            <a href="/files" class="nav-item"><i class="bi bi-folder2-open"></i> My Files <span class="nav-badge" th:text="${fileCount != null ? fileCount : 0}">0</span></a>
+            <a href="/files/upload" class="nav-item active"><i class="bi bi-cloud-upload"></i> Upload File</a>
+            <a href="/files/shared" class="nav-item"><i class="bi bi-share-fill"></i> Shared With Me</a>
+        </div>
+        <div class="nav-section">
+            <div class="nav-label">Vault</div>
+            <a href="/activity" class="nav-item"><i class="bi bi-activity"></i> Activity Log</a>
+            <a href="/chat" class="nav-item"><i class="bi bi-chat-dots-fill"></i> Chat</a>
+        </div>
+        <div class="nav-section">
+            <div class="nav-label">Account</div>
+            <a href="/settings" class="nav-item"><i class="bi bi-gear-fill"></i> Settings</a>
+        </div>
+            <div class="nav-section" th:if="${isAdmin}">
+                <div class="nav-label">System</div>
+                <a href="/admin" class="nav-item" style="color:var(--red);opacity:.85"><i class="bi bi-shield-fill-check"></i> Admin Panel</a>
+            </div>
+        <div class="sidebar-footer">
+            <div class="sf-text">VaultHub · Secure Storage</div>
+        </div>
+    </aside>
+
+    <main class="main">
+        <div class="page-head">
+            <h4><i class="bi bi-cloud-upload" style="color:var(--accent2)"></i> Upload File</h4>
+            <p>Drop any file into your vault — up to 500 MB</p>
+        </div>
+
+        <div class="alert-err" th:if="${error}">
+            <i class="bi bi-exclamation-circle-fill"></i>
+            <span th:text="${error}">Something went wrong.</span>
+        </div>
+
+        <div class="upload-card">
+            <div class="uc-head">
+                <i class="bi bi-cloud-upload" style="color:var(--accent2)"></i>
+                <h5>Upload to VaultHub</h5>
+            </div>
+            <div class="uc-body">
+                <form th:action="@{/files/upload}" method="post" enctype="multipart/form-data" id="uploadForm">
+
+                    <!-- DROP ZONE -->
+                    <div class="dropzone" id="dropzone">
+                        <input type="file" name="file" id="fileInput"/>
+
+                        <!-- Normal content -->
+                        <div class="dz-content" id="dzContent">
+                            <div class="dz-icon-wrap">☁️</div>
+                            <div class="dz-title">Drop your file here</div>
+                            <div class="dz-sub">Drag and drop any file to upload it instantly</div>
+                            <div class="dz-or"><span>or</span></div>
+                            <div class="dz-browse">Browse files</div>
+                            <div class="dz-limits">
+                                <span class="dz-chip">Any file type</span>
+                                <span class="dz-chip">Max 500 MB</span>
+                                <span class="dz-chip">Instant storage</span>
+                            </div>
+                        </div>
+
+                        <!-- Drag-over overlay -->
+                        <div class="drag-text">
+                            <div class="drag-text-icon">📂</div>
+                            <div class="drag-text-label">Release to upload</div>
+                        </div>
+                    </div>
+
+                    <!-- FILE PREVIEW -->
+                    <div class="file-preview d-flex" id="filePreview">
+                        <span class="fp-icon" id="fpIcon">📦</span>
+                        <div style="flex:1;min-width:0">
+                            <div class="fp-name" id="fpName"></div>
+                            <div class="fp-size" id="fpSize"></div>
+                        </div>
+                        <button type="button" class="fp-clear" onclick="clearFile()">
+                            <i class="bi bi-x-lg"></i>
+                        </button>
+                    </div>
+
+                    <div class="div-line"></div>
+
+                    <button type="submit" class="btn-sub" id="submitBtn" disabled>
+                        <i class="bi bi-cloud-upload"></i>
+                        <span id="submitLabel">Select a file to upload</span>
+                    </button>
+
+                    <!-- PROGRESS -->
+                    <div class="progress-wrap" id="progressWrap">
+                        <div class="prog-label">
+                            <span id="progStatus">Uploading...</span>
+                            <span id="progPct">0%</span>
+                        </div>
+                        <div class="prog-track">
+                            <div class="prog-fill" id="progFill"></div>
+                            <div class="prog-shine"></div>
+                        </div>
+                    </div>
+                </form>
+
+                <!-- INFO CARDS -->
+                <div class="info-grid">
+                    <div class="info-card">
+                        <span class="ic-icon">📁</span>
+                        <div class="ic-title">Any File Type</div>
+                        <div class="ic-sub">Images, videos, documents, archives and more.</div>
+                    </div>
+                    <div class="info-card">
+                        <span class="ic-icon">👁️</span>
+                        <div class="ic-title">In-Browser Preview</div>
+                        <div class="ic-sub">View PDFs, images, video and audio directly.</div>
+                    </div>
+                    <div class="info-card">
+                        <span class="ic-icon">🔗</span>
+                        <div class="ic-title">Easy Sharing</div>
+                        <div class="ic-sub">Share any file with other VaultHub members.</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+</div>
+
+<nav class="bnav">
+    <a href="/dashboard"><i class="bi bi-grid-1x2-fill"></i>Home</a>
+    <a href="/files" class="active"><i class="bi bi-folder2-open"></i>Files</a>
+    <a href="/chat"><i class="bi bi-chat-dots-fill"></i>Chat</a>
+    <a href="/activity"><i class="bi bi-activity"></i>Activity</a>
+    <a href="/settings"><i class="bi bi-gear-fill"></i>Settings</a>
+</nav>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+<script>
+const dropzone   = document.getElementById('dropzone');
+const fileInput  = document.getElementById('fileInput');
+const submitBtn  = document.getElementById('submitBtn');
+const submitLabel= document.getElementById('submitLabel');
+
+// ── FILE HELPERS ──────────────────────────────────────
+function getIcon(mime) {
+    if (!mime) return '📦';
+    if (mime.includes('image'))  return '🖼️';
+    if (mime.includes('pdf'))    return '📄';
+    if (mime.includes('video'))  return '🎬';
+    if (mime.includes('audio'))  return '🎵';
+    if (mime.includes('zip') || mime.includes('tar') || mime.includes('gz')) return '🗜️';
+    if (mime.includes('text'))   return '📝';
+    return '📦';
+}
+function fmtSize(bytes) {
+    if (bytes < 1024)       return bytes + ' B';
+    if (bytes < 1048576)    return (bytes/1024).toFixed(1) + ' KB';
+    if (bytes < 1073741824) return (bytes/1048576).toFixed(1) + ' MB';
+    return (bytes/1073741824).toFixed(2) + ' GB';
+}
+
+// ── SHOW FILE PREVIEW ─────────────────────────────────
+function showFile(file) {
+    document.getElementById('fpIcon').textContent = getIcon(file.type);
+    document.getElementById('fpName').textContent = file.name;
+    document.getElementById('fpSize').textContent = fmtSize(file.size) + (file.type ? ' · ' + file.type : '');
+    document.getElementById('filePreview').style.display = 'flex';
+    submitBtn.disabled = false;
+    submitLabel.textContent = 'Upload "' + file.name + '"';
+    // Pulse the dropzone border to confirm
+    dropzone.style.borderColor = 'var(--green)';
+    dropzone.style.boxShadow = '0 0 0 4px rgba(52,211,153,.1)';
+    setTimeout(() => {
+        dropzone.style.borderColor = '';
+        dropzone.style.boxShadow = '';
+    }, 1200);
+}
+
+function clearFile() {
+    fileInput.value = '';
+    document.getElementById('filePreview').style.display = 'none';
+    submitBtn.disabled = true;
+    submitLabel.textContent = 'Select a file to upload';
+}
+
+// ── FILE INPUT CHANGE ─────────────────────────────────
+fileInput.addEventListener('change', function() {
+    if (this.files[0]) showFile(this.files[0]);
+});
+
+// ── DRAG & DROP ───────────────────────────────────────
+let dragCounter = 0;
+
+// Global drag enter on window to show intent
+window.addEventListener('dragenter', (e) => {
+    e.preventDefault();
+    dragCounter++;
+});
+window.addEventListener('dragleave', (e) => {
+    dragCounter--;
+});
+window.addEventListener('dragover', (e) => e.preventDefault());
+window.addEventListener('drop', (e) => {
+    dragCounter = 0;
+    e.preventDefault();
+});
+
+// Dropzone-specific
+dropzone.addEventListener('dragenter', (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    dropzone.classList.add('drag-over');
+});
+dropzone.addEventListener('dragover', (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+});
+dropzone.addEventListener('dragleave', (e) => {
+    // Only remove if leaving dropzone entirely
+    if (!dropzone.contains(e.relatedTarget)) {
+        dropzone.classList.remove('drag-over');
+    }
+});
+dropzone.addEventListener('drop', (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    dropzone.classList.remove('drag-over');
+    const file = e.dataTransfer.files[0];
+    if (file) {
+        // Inject the file into the input
+        const dt = new DataTransfer();
+        dt.items.add(file);
+        fileInput.files = dt.files;
+        showFile(file);
+    }
+});
+
+// ── SUBMIT: show progress ─────────────────────────────
+document.getElementById('uploadForm').addEventListener('submit', function(e) {
+    if (fileInput.files.length === 0) { e.preventDefault(); return; }
+    const pw = document.getElementById('progressWrap');
+    const pf = document.getElementById('progFill');
+    const pp = document.getElementById('progPct');
+    const ps = document.getElementById('progStatus');
+    pw.style.display = 'block';
+    submitBtn.disabled = true;
+    submitBtn.innerHTML = '<i class="bi bi-hourglass-split"></i> <span>Uploading...</span>';
+
+    let pct = 0;
+    const size = fileInput.files[0].size;
+    // Simulate based on file size — bigger = slower ticks
+    const tickMs = Math.max(80, Math.min(400, size / 500000));
+    const interval = setInterval(() => {
+        pct = Math.min(pct + Math.random() * 6 + 2, 91);
+        pf.style.width = pct + '%';
+        pp.textContent = Math.round(pct) + '%';
+        if (pct > 60) ps.textContent = 'Almost done...';
+    }, tickMs);
+
+    // Store interval ID on element for cleanup
+    window._uploadInterval = interval;
+});
+
+// ── ERROR from URL params ─────────────────────────────
+(function() {
+    const p = new URLSearchParams(window.location.search);
+    const ea = document.querySelector('.alert-err');
+    if (ea) {
+        if (p.get('error') === 'empty')  { ea.querySelector('span').textContent = 'Please select a file first.'; ea.style.display = 'flex'; }
+        if (p.get('error') === 'failed') { ea.querySelector('span').textContent = 'Upload failed — please try again.'; ea.style.display = 'flex'; }
+    }
+    if (p.toString()) window.history.replaceState({}, '', window.location.pathname);
+})();
+</script>
+</body>
+</html>

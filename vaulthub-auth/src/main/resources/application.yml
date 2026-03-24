@@ -1,0 +1,70 @@
+server:
+  port: 8081
+  forward-headers-strategy: framework
+
+spring:
+  application:
+    name: vaulthub-auth
+  data:
+    redis:
+      host: merry-impala-66504.upstash.io
+      port: 6379
+      password: gQAAAAAAAQPIAAIncDI0MjY1N2JhODNmNjg0ODg1OTJkZDliNzMxNGY0ZTVlY3AyNjY1MDQ
+      ssl:
+        enabled: true
+  session:
+    store-type: redis
+    timeout: 86400
+    redis:
+      namespace: vaulthub:session
+  datasource:
+    url: jdbc:mysql://localhost:3306/vaulthub_auth?createDatabaseIfNotExist=true
+    username: root
+    password: harshad@123#
+    driver-class-name: com.mysql.cj.jdbc.Driver
+  jpa:
+    hibernate:
+      ddl-auto: update
+    show-sql: true
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.MySQLDialect
+        format_sql: true
+  thymeleaf:
+    encoding: UTF-8
+    cache: false
+    prefix: classpath:/templates/
+    suffix: .html
+  servlet:
+    multipart:
+      enabled: true
+      max-file-size: 5MB
+      max-request-size: 5MB
+  mail:
+    host: smtp.gmail.com
+    port: 587
+    username: harshad.deshmukh82004@gmail.com
+    password: boyu ecwn ytfx fljl
+    properties:
+      mail:
+        smtp:
+          auth: true
+          starttls:
+            enable: true
+            required: true
+
+eureka:
+  client:
+    enabled: false
+    register-with-eureka: false
+    fetch-registry: false
+
+jwt:
+  secret: vaulthub-super-secret-key-2024-very-long
+  expiration: 86400000
+  datasource:
+    hikari:
+      maximum-pool-size: 10
+      minimum-idle: 3
+      connection-timeout: 3000
+      idle-timeout: 300000

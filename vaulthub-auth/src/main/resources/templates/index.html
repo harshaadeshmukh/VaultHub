@@ -1,0 +1,647 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8"/>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+    <title>VaultHub — Secure File Storage</title>
+    <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Mono:wght@400;500&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet"/>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css" rel="stylesheet"/>
+    <style>
+        :root {
+            --bg:#07080f;--bg2:#0d0e1a;--bg3:#121320;
+            --border:rgba(255,255,255,0.07);
+            --accent:#4f6ef7;--accent2:#7b93ff;
+            --teal:#00d4aa;--text:#dde1f5;--muted:#5a5f80;
+            --syne:'Syne',sans-serif;--mono:'DM Mono',monospace;--sans:'DM Sans',sans-serif;
+        }
+        *,*::before,*::after{margin:0;padding:0;box-sizing:border-box;}
+        html{scroll-behavior:smooth;}
+        body{font-family:var(--sans);background:var(--bg);color:var(--text);overflow-x:hidden;}
+
+        /* ── NOISE OVERLAY ── */
+        body::before{content:'';position:fixed;inset:0;background-image:url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='.04'/%3E%3C/svg%3E");pointer-events:none;z-index:1;opacity:.35;}
+
+        /* ── CANVAS ── */
+        #bg-canvas{position:fixed;inset:0;z-index:0;pointer-events:none;}
+
+        /* ── NAV ── */
+        nav{position:fixed;top:0;left:0;right:0;z-index:100;padding:1.1rem 2rem;display:flex;align-items:center;justify-content:space-between;background:rgba(7,8,15,.75);backdrop-filter:blur(20px);border-bottom:1px solid var(--border);animation:slideDown .6s ease both;}
+        @keyframes slideDown{from{transform:translateY(-100%);opacity:0}to{transform:translateY(0);opacity:1}}
+        .brand{font-family:var(--syne);font-size:1.25rem;font-weight:800;color:#fff;text-decoration:none;display:flex;align-items:center;gap:.5rem;letter-spacing:-.5px;}
+        .brand span{color:var(--accent2);}
+        .nav-links{display:flex;align-items:center;gap:.5rem;}
+        .btn{font-family:var(--syne);font-weight:600;font-size:.82rem;padding:.5rem 1.1rem;border-radius:8px;text-decoration:none;border:none;cursor:pointer;transition:all .2s;display:inline-flex;align-items:center;gap:.4rem;}
+        .btn-ghost{background:transparent;color:var(--muted);border:1px solid var(--border);}
+        .btn-ghost:hover{color:var(--text);background:rgba(255,255,255,.05);}
+        .btn-solid{background:var(--accent);color:#fff;box-shadow:0 0 20px rgba(79,110,247,.35);}
+        .btn-solid:hover{background:#3d5de0;transform:translateY(-1px);box-shadow:0 0 30px rgba(79,110,247,.5);color:#fff;}
+        .btn-admin{background:transparent;color:#f87171;border:1px solid rgba(248,113,113,.3);}
+        .btn-admin:hover{background:rgba(248,113,113,.08);border-color:rgba(248,113,113,.6);color:#fca5a5;}
+        .btn-lg{padding:.75rem 1.8rem;font-size:.9rem;border-radius:12px;}
+        .btn-outline-lg{background:transparent;color:var(--text);border:1px solid rgba(255,255,255,.12);padding:.75rem 1.8rem;font-size:.9rem;border-radius:12px;text-decoration:none;display:inline-flex;align-items:center;gap:.4rem;font-family:var(--syne);font-weight:600;transition:all .2s;}
+        .btn-outline-lg:hover{border-color:var(--accent);color:var(--accent2);background:rgba(79,110,247,.07);}
+
+        /* ── HERO ── */
+        .hero{position:relative;z-index:2;min-height:100svh;display:flex;align-items:center;padding:8rem 2rem 5rem;}
+        .hero-inner{max-width:1280px;margin:0 auto;width:100%;display:grid;grid-template-columns:1fr 1fr;gap:4rem;align-items:center;}
+
+        /* ── TITLE ANIMATION SYSTEM ── */
+        .hero-badge{display:inline-flex;align-items:center;gap:.5rem;background:rgba(79,110,247,.08);border:1px solid rgba(79,110,247,.2);padding:.3rem .9rem;border-radius:100px;font-family:var(--mono);font-size:.7rem;color:var(--accent2);margin-bottom:1.5rem;animation:fadeUp .7s .3s both;}
+        .badge-dot{width:6px;height:6px;background:var(--teal);border-radius:50%;box-shadow:0 0 8px var(--teal);animation:blink 2s infinite;}
+        @keyframes blink{0%,100%{opacity:1}50%{opacity:.2}}
+
+        /* THE MAIN TITLE — split into letter spans */
+        .hero-title-wrap{margin-bottom:1.4rem;animation:fadeUp .7s .4s both;}
+        .hero h1{font-family:var(--syne);font-size:clamp(2.4rem,5vw,4rem);font-weight:800;line-height:1.1;letter-spacing:-2px;color:#fff;}
+
+        /* Each letter in "VaultHub" gets its own animation */
+        .brand-letters{display:inline-flex;position:relative;}
+        .brand-letters .letter{
+            display:inline-block;
+            position:relative;
+            animation:letterDrop 0.6s cubic-bezier(.23,1.2,.32,1) both;
+            transform-origin:top center;
+        }
+
+        /* Staggered drop-in per letter */
+        .brand-letters .letter:nth-child(1){animation-delay:.5s}
+        .brand-letters .letter:nth-child(2){animation-delay:.58s}
+        .brand-letters .letter:nth-child(3){animation-delay:.66s}
+        .brand-letters .letter:nth-child(4){animation-delay:.74s}
+        .brand-letters .letter:nth-child(5){animation-delay:.82s}
+        .brand-letters .letter:nth-child(6){animation-delay:.9s}
+        .brand-letters .letter:nth-child(7){animation-delay:.98s}
+        .brand-letters .letter:nth-child(8){animation-delay:1.06s}
+
+        @keyframes letterDrop{
+            0%{opacity:0;transform:translateY(-60px) rotateX(-90deg);}
+            60%{opacity:1;}
+            100%{opacity:1;transform:translateY(0) rotateX(0deg);}
+        }
+
+        /* "Vault" part — glowing indigo */
+        .title-vault .letter{
+            color:#fff;
+            text-shadow: 0 0 30px rgba(79,110,247,0), 0 0 60px rgba(79,110,247,0);
+            transition: text-shadow .3s;
+        }
+        .title-vault .letter:hover{
+            text-shadow: 0 0 20px rgba(79,110,247,.9), 0 0 60px rgba(79,110,247,.4);
+            color:#a5b4fc;
+        }
+
+        /* "Hub" part — glowing teal */
+        .title-hub .letter{
+            color:var(--accent2);
+            text-shadow: 0 0 30px rgba(0,212,170,0);
+            transition: text-shadow .3s;
+        }
+        .title-hub .letter:hover{
+            text-shadow: 0 0 20px rgba(0,212,170,.9), 0 0 60px rgba(0,212,170,.4);
+            color:var(--teal);
+        }
+
+        /* RAIN DROPS — digital rain falling from each letter */
+        .rain-container{
+            position:absolute;
+            top:100%;
+            left:0;right:0;
+            height:120px;
+            pointer-events:none;
+            overflow:visible;
+        }
+        .rain-drop{
+            position:absolute;
+            width:2px;
+            border-radius:2px;
+            opacity:0;
+            animation:rainFall linear infinite;
+        }
+        @keyframes rainFall{
+            0%{opacity:0;transform:translateY(0);height:0px;}
+            10%{opacity:.8;}
+            70%{opacity:.4;}
+            100%{opacity:0;transform:translateY(100px);height:60px;}
+        }
+
+        /* GLOW UNDERLINE that sweeps across the title */
+        .title-glow-line{
+            position:absolute;
+            bottom:-4px;
+            left:0;
+            height:2px;
+            width:0;
+            background:linear-gradient(90deg, transparent, var(--accent2), var(--teal), transparent);
+            border-radius:2px;
+            animation:glowSweep 1.2s ease 1.8s both;
+            box-shadow:0 0 12px var(--accent2), 0 0 24px var(--teal);
+        }
+        @keyframes glowSweep{
+            0%{width:0;left:0;opacity:0;}
+            20%{opacity:1;}
+            100%{width:100%;left:0;opacity:1;}
+        }
+
+        /* SCANNING LINE that passes over the whole title */
+        .scan-line{
+            position:absolute;
+            top:0;bottom:0;
+            width:3px;
+            background:linear-gradient(180deg, transparent, rgba(79,110,247,.9), rgba(0,212,170,.7), transparent);
+            pointer-events:none;
+            border-radius:2px;
+            animation:scanPass 2s ease 1.4s both;
+            box-shadow:0 0 12px var(--accent), -4px 0 20px rgba(0,212,170,.3);
+        }
+        @keyframes scanPass{
+            0%{left:-10px;opacity:0;}
+            5%{opacity:1;}
+            95%{opacity:1;}
+            100%{left:calc(100% + 10px);opacity:0;}
+        }
+
+        /* GLITCH duplicates */
+        .brand-letters::before,
+        .brand-letters::after{
+            content:attr(data-text);
+            position:absolute;
+            top:0;left:0;
+            font-family:var(--syne);
+            font-weight:800;
+            pointer-events:none;
+        }
+        .brand-letters::before{
+            color:var(--teal);
+            animation:glitch1 6s infinite 2.5s;
+            clip-path:polygon(0 20%,100% 20%,100% 40%,0 40%);
+        }
+        .brand-letters::after{
+            color:var(--accent);
+            animation:glitch2 6s infinite 2.5s;
+            clip-path:polygon(0 60%,100% 60%,100% 80%,0 80%);
+        }
+        @keyframes glitch1{
+            0%,94%,100%{transform:translate(0);opacity:0;}
+            95%{transform:translate(-3px,1px);opacity:.7;}
+            96%{transform:translate(3px,-1px);opacity:.7;}
+            97%{transform:translate(-2px,2px);opacity:.5;}
+            98%{transform:translate(0);opacity:0;}
+        }
+        @keyframes glitch2{
+            0%,94%,100%{transform:translate(0);opacity:0;}
+            95%{transform:translate(3px,-2px);opacity:.6;}
+            96%{transform:translate(-3px,1px);opacity:.6;}
+            97%{transform:translate(2px,1px);opacity:.4;}
+            98%{transform:translate(0);opacity:0;}
+        }
+
+        /* FLOATING PARTICLES around title */
+        .title-particle{
+            position:absolute;
+            width:4px;height:4px;
+            border-radius:50%;
+            pointer-events:none;
+            animation:titleParticleFloat linear infinite;
+        }
+        @keyframes titleParticleFloat{
+            0%{opacity:0;transform:translateY(0) scale(0);}
+            20%{opacity:1;transform:translateY(-20px) scale(1);}
+            80%{opacity:.5;}
+            100%{opacity:0;transform:translateY(-80px) scale(.3);}
+        }
+
+        /* REST OF HERO */
+        .hero-sub{font-size:.97rem;color:var(--muted);line-height:1.8;max-width:460px;margin-bottom:2.2rem;animation:fadeUp .7s .75s both;}
+        .hero-cta{display:flex;gap:.9rem;flex-wrap:wrap;animation:fadeUp .7s .9s both;}
+        .hero-stats{display:flex;gap:2rem;margin-top:3rem;padding-top:2rem;border-top:1px solid var(--border);animation:fadeUp .7s 1.1s both;}
+        .stat-item{display:flex;flex-direction:column;gap:.15rem;}
+        .stat-num{font-family:var(--syne);font-size:1.5rem;font-weight:800;color:#fff;}
+        .stat-label{font-size:.72rem;color:var(--muted);font-family:var(--mono);}
+        @keyframes fadeUp{from{opacity:0;transform:translateY(20px)}to{opacity:1;transform:translateY(0)}}
+
+        /* ── HERO VISUAL ── */
+        .hero-visual{position:relative;animation:fadeUp .7s .6s both;}
+        .vault-ui{background:var(--bg2);border:1px solid var(--border);border-radius:20px;overflow:hidden;box-shadow:0 40px 80px rgba(0,0,0,.5),0 0 0 1px rgba(255,255,255,.03);}
+        .vault-titlebar{background:rgba(255,255,255,.02);border-bottom:1px solid var(--border);padding:.75rem 1rem;display:flex;align-items:center;gap:.5rem;}
+        .tb-dot{width:10px;height:10px;border-radius:50%;}
+        .tb-red{background:#ff5f57}.tb-yellow{background:#febc2e}.tb-green{background:#28c840}
+        .tb-title{font-family:var(--mono);font-size:.7rem;color:var(--muted);margin:0 auto;}
+        .vault-body{padding:1.2rem;display:flex;flex-direction:column;gap:.75rem;}
+        .file-row{background:var(--bg3);border:1px solid var(--border);border-radius:12px;padding:.85rem 1rem;display:flex;align-items:center;gap:.9rem;transition:all .3s;animation:rowIn .5s both;}
+        .file-row:nth-child(1){animation-delay:.9s}.file-row:nth-child(2){animation-delay:1.05s}.file-row:nth-child(3){animation-delay:1.2s}
+        @keyframes rowIn{from{opacity:0;transform:translateX(20px)}to{opacity:1;transform:translateX(0)}}
+        .file-row:hover{border-color:rgba(79,110,247,.3);transform:translateX(-3px);}
+        .file-emoji{font-size:1.2rem;flex-shrink:0;}
+        .file-info{flex:1;min-width:0;}
+        .file-name{font-size:.82rem;font-weight:500;color:#fff;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+        .file-meta{font-family:var(--mono);font-size:.62rem;color:var(--muted);margin-top:.15rem;}
+        .file-badge{font-family:var(--mono);font-size:.6rem;padding:.2rem .55rem;border-radius:100px;flex-shrink:0;}
+        .badge-secure{background:rgba(0,212,170,.1);color:var(--teal);border:1px solid rgba(0,212,170,.2);}
+        .badge-upload{background:rgba(79,110,247,.12);color:var(--accent2);border:1px solid rgba(79,110,247,.25);}
+        .progress-wrap{width:100%;height:3px;background:rgba(255,255,255,.05);border-radius:10px;overflow:hidden;margin-top:.4rem;}
+        .progress-bar{height:100%;border-radius:10px;}
+        .prog-green{background:linear-gradient(90deg,var(--teal),#059669);}
+        .prog-blue{background:linear-gradient(90deg,var(--accent),#8b5cf6);animation:progAnim 2s ease-out both;animation-delay:1.4s;}
+        @keyframes progAnim{from{width:0%!important}}
+        .vault-footer{border-top:1px solid var(--border);padding:.75rem 1rem;display:flex;align-items:center;gap:.6rem;}
+        .vf-dot{width:7px;height:7px;background:var(--teal);border-radius:50%;box-shadow:0 0 8px var(--teal);animation:blink 2s infinite;}
+        .vf-text{font-family:var(--mono);font-size:.62rem;color:var(--muted);flex:1;}
+        .vf-live{font-family:var(--mono);font-size:.6rem;color:var(--teal);}
+        .float-badge{position:absolute;background:var(--bg2);border:1px solid var(--border);border-radius:12px;padding:.6rem .9rem;display:flex;align-items:center;gap:.5rem;font-family:var(--mono);font-size:.65rem;color:var(--text);box-shadow:0 8px 24px rgba(0,0,0,.4);backdrop-filter:blur(12px);}
+        .fb-1{top:-1rem;right:-1rem;animation:float1 4s ease-in-out infinite;animation-delay:1.5s;}
+        .fb-2{bottom:1rem;left:-1.5rem;animation:float2 5s ease-in-out infinite;animation-delay:2s;}
+        @keyframes float1{0%,100%{transform:translateY(0)}50%{transform:translateY(-8px)}}
+        @keyframes float2{0%,100%{transform:translateY(0)}50%{transform:translateY(6px)}}
+
+        /* ── FEATURES ── */
+        .features{position:relative;z-index:2;padding:7rem 2rem;background:var(--bg2);border-top:1px solid var(--border);}
+        .features-inner{max-width:1280px;margin:0 auto;}
+        .section-label{font-family:var(--mono);font-size:.7rem;color:var(--accent2);letter-spacing:3px;text-transform:uppercase;margin-bottom:.8rem;}
+        .section-title{font-family:var(--syne);font-size:clamp(1.8rem,3vw,2.6rem);font-weight:800;color:#fff;letter-spacing:-1px;margin-bottom:.6rem;}
+        .section-sub{color:var(--muted);font-size:.92rem;margin-bottom:3.5rem;}
+        .feat-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:1px;background:var(--border);border-radius:20px;overflow:hidden;}
+        .feat-cell{background:var(--bg2);padding:2rem;position:relative;transition:background .3s;cursor:default;}
+        .feat-cell::after{content:'';position:absolute;inset:0;background:linear-gradient(135deg,rgba(79,110,247,.05),transparent);opacity:0;transition:opacity .3s;}
+        .feat-cell:hover{background:rgba(79,110,247,.04);}
+        .feat-cell:hover::after{opacity:1;}
+        .feat-num{font-family:var(--mono);font-size:.65rem;color:var(--muted);margin-bottom:1.2rem;}
+        .feat-icon-wrap{width:46px;height:46px;border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:1.3rem;margin-bottom:1rem;}
+        .feat-cell h3{font-family:var(--syne);font-size:.95rem;font-weight:700;color:#fff;margin-bottom:.5rem;}
+        .feat-cell p{font-size:.8rem;color:var(--muted);line-height:1.7;}
+
+        /* ── HOW IT WORKS ── */
+        .how{position:relative;z-index:2;padding:7rem 2rem;}
+        .how-inner{max-width:1280px;margin:0 auto;}
+        .steps{display:grid;grid-template-columns:repeat(4,1fr);gap:2rem;margin-top:3.5rem;position:relative;}
+        .steps::before{content:'';position:absolute;top:28px;left:10%;right:10%;height:1px;background:linear-gradient(90deg,transparent,var(--accent),var(--teal),transparent);}
+        .step{display:flex;flex-direction:column;align-items:center;text-align:center;gap:1rem;}
+        .step-num{width:56px;height:56px;border-radius:16px;background:var(--bg2);border:1px solid var(--border);display:flex;align-items:center;justify-content:center;font-family:var(--syne);font-size:1.1rem;font-weight:800;color:var(--accent2);position:relative;z-index:1;transition:all .3s;}
+        .step:hover .step-num{background:var(--accent);color:#fff;box-shadow:0 0 20px rgba(79,110,247,.4);}
+        .step h4{font-family:var(--syne);font-size:.9rem;font-weight:700;color:#fff;}
+        .step p{font-size:.78rem;color:var(--muted);line-height:1.65;}
+
+        /* ── CTA ── */
+        .cta{position:relative;z-index:2;padding:7rem 2rem;background:var(--bg2);border-top:1px solid var(--border);text-align:center;overflow:hidden;}
+        .cta-glow{position:absolute;width:600px;height:400px;background:radial-gradient(ellipse,rgba(79,110,247,.1) 0%,transparent 70%);top:50%;left:50%;transform:translate(-50%,-50%);pointer-events:none;}
+        .cta-inner{position:relative;z-index:1;max-width:600px;margin:0 auto;}
+        .cta h2{font-family:var(--syne);font-size:clamp(1.8rem,3vw,2.6rem);font-weight:800;color:#fff;letter-spacing:-1px;margin-bottom:.9rem;}
+        .cta p{font-size:.93rem;color:var(--muted);margin-bottom:2.2rem;}
+        .cta-btns{display:flex;gap:1rem;justify-content:center;flex-wrap:wrap;}
+
+        /* ── FOOTER ── */
+        footer{position:relative;z-index:2;background:var(--bg);border-top:1px solid var(--border);padding:1.6rem 2rem;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:1rem;}
+        .footer-brand{font-family:var(--syne);font-size:.9rem;font-weight:700;color:var(--muted);}
+        .footer-brand span{color:var(--accent2);}
+        footer p{font-size:.75rem;color:var(--muted);}
+
+        /* ── REVEAL ── */
+        .reveal{opacity:0;transform:translateY(30px);transition:opacity .7s ease,transform .7s ease;}
+        .reveal.visible{opacity:1;transform:translateY(0);}
+        .reveal-delay-1{transition-delay:.1s}.reveal-delay-2{transition-delay:.2s}.reveal-delay-3{transition-delay:.3s}.reveal-delay-4{transition-delay:.4s}
+
+        /* ── RESPONSIVE ── */
+        @media(max-width:1024px){
+            .hero-inner{grid-template-columns:1fr;gap:3rem;}
+            .hero-visual{order:-1;}
+            .feat-grid{grid-template-columns:repeat(2,1fr);}
+            .steps{grid-template-columns:repeat(2,1fr);}
+            .steps::before{display:none;}
+        }
+        @media(max-width:640px){
+            nav{padding:.9rem 1.2rem;}
+            .hero{padding:6rem 1.2rem 3rem;}
+            .hero h1{letter-spacing:-1px;}
+            .hero-stats{gap:1.2rem;}
+            .feat-grid{grid-template-columns:1fr;}
+            .steps{grid-template-columns:1fr 1fr;gap:1.5rem;}
+            .features,.how,.cta{padding:4rem 1.2rem;}
+            footer{flex-direction:column;text-align:center;}
+            .float-badge{display:none;}
+            .brand-letters::before,.brand-letters::after{display:none;}
+        }
+    </style>
+</head>
+<body>
+<canvas id="bg-canvas"></canvas>
+
+<nav>
+    <a href="/" class="brand">🗂️ Vault<span>Hub</span></a>
+    <div class="nav-links">
+        <a href="/login" class="btn btn-ghost"><i class="bi bi-box-arrow-in-right"></i> Sign In</a>
+        <a href="/admin-login" class="btn btn-admin"><i class="bi bi-shield-fill-check"></i> Admin</a>
+        <a href="/register" class="btn btn-solid">Get Started <i class="bi bi-arrow-right"></i></a>
+    </div>
+</nav>
+
+<section class="hero">
+    <div class="hero-inner">
+        <div class="hero-left">
+            <div class="hero-badge"><span class="badge-dot"></span> Secure · Private · Yours</div>
+
+            <div class="hero-title-wrap">
+                <h1>Your Files,<br/>
+                <!-- THE BIG ANIMATED TITLE -->
+                <span style="position:relative;display:inline-block;">
+                    <span class="brand-letters" id="brandLetters" data-text="VaultHub" style="position:relative;">
+                        <span class="title-vault">
+                            <span class="letter">V</span><span class="letter">a</span><span class="letter">u</span><span class="letter">l</span><span class="letter">t</span>
+                        </span><span class="title-hub">
+                            <span class="letter">H</span><span class="letter">u</span><span class="letter">b</span>
+                        </span>
+                        <!-- rain drops container -->
+                        <span class="rain-container" id="rainContainer"></span>
+                        <!-- scan line -->
+                        <span class="scan-line"></span>
+                        <!-- glow underline -->
+                        <span class="title-glow-line"></span>
+                        <!-- floating particles -->
+                        <span id="titleParticles"></span>
+                    </span>
+                </span>
+                </h1>
+            </div>
+
+            <p class="hero-sub">VaultHub gives you a private space to store, manage and share your files. Fast, simple and always available.</p>
+            <div class="hero-cta">
+                <a href="/register" class="btn btn-solid btn-lg"><i class="bi bi-shield-lock-fill"></i> Create Your Vault</a>
+                <a href="/login" class="btn btn-outline-lg"><i class="bi bi-box-arrow-in-right"></i> Sign In</a>
+            </div>
+            <div class="hero-stats">
+                <div class="stat-item"><div class="stat-num">500MB</div><div class="stat-label">max file size</div></div>
+                <div class="stat-item"><div class="stat-num">JWT</div><div class="stat-label">auth security</div></div>
+                <div class="stat-item"><div class="stat-num">∞</div><div class="stat-label">file types</div></div>
+            </div>
+        </div>
+
+        <div class="hero-visual">
+            <div class="vault-ui">
+                <div class="vault-titlebar">
+                    <div class="tb-dot tb-red"></div>
+                    <div class="tb-dot tb-yellow"></div>
+                    <div class="tb-dot tb-green"></div>
+                    <span class="tb-title">vault — /my-files</span>
+                </div>
+                <div class="vault-body">
+                    <div class="file-row">
+                        <div class="file-emoji">📄</div>
+                        <div class="file-info">
+                            <div class="file-name">project_report_final.pdf</div>
+                            <div class="file-meta">2.4 MB</div>
+                            <div class="progress-wrap"><div class="progress-bar prog-green" style="width:100%"></div></div>
+                        </div>
+                        <div class="file-badge badge-secure">● stored</div>
+                    </div>
+                    <div class="file-row">
+                        <div class="file-emoji">🎵</div>
+                        <div class="file-info">
+                            <div class="file-name">music_backup_2024.zip</div>
+                            <div class="file-meta">78 MB</div>
+                            <div class="progress-wrap"><div class="progress-bar prog-blue" style="width:72%"></div></div>
+                        </div>
+                        <div class="file-badge badge-upload">↑ 72%</div>
+                    </div>
+                    <div class="file-row">
+                        <div class="file-emoji">🖼️</div>
+                        <div class="file-info">
+                            <div class="file-name">photos_vacation.tar.gz</div>
+                            <div class="file-meta">114 MB</div>
+                            <div class="progress-wrap"><div class="progress-bar prog-green" style="width:100%"></div></div>
+                        </div>
+                        <div class="file-badge badge-secure">● stored</div>
+                    </div>
+                </div>
+                <div class="vault-footer">
+                    <div class="vf-dot"></div>
+                    <span class="vf-text">3 files · 194.4 MB used</span>
+                    <span class="vf-live">live</span>
+                </div>
+            </div>
+            <div class="float-badge fb-1"><i class="bi bi-check-circle-fill" style="color:var(--teal)"></i> Stored Safely</div>
+            <div class="float-badge fb-2"><i class="bi bi-share-fill" style="color:var(--accent2)"></i> Shared securely</div>
+        </div>
+    </div>
+</section>
+
+<section class="features">
+    <div class="features-inner">
+        <div class="section-label reveal">What's Inside</div>
+        <div class="section-title reveal reveal-delay-1">Built for real storage.<br/>Not just a demo.</div>
+        <div class="section-sub reveal reveal-delay-2">Everything you need to upload, manage and share files — simple and reliable.</div>
+        <div class="feat-grid reveal reveal-delay-3">
+            <div class="feat-cell"><div class="feat-num">01</div><div class="feat-icon-wrap" style="background:rgba(79,110,247,.1)">🔐</div><h3>JWT Authentication</h3><p>Secure token-based auth on every request. Your session stays locked to you alone.</p></div>
+            <div class="feat-cell"><div class="feat-num">02</div><div class="feat-icon-wrap" style="background:rgba(0,212,170,.1)">📦</div><h3>Large File Support</h3><p>Upload files up to 500MB. Stored reliably with instant access any time.</p></div>
+            <div class="feat-cell"><div class="feat-num">03</div><div class="feat-icon-wrap" style="background:rgba(245,158,11,.1)">🔗</div><h3>Secure File Sharing</h3><p>Share files with other VaultHub users using access tokens. You control who sees what.</p></div>
+            <div class="feat-cell"><div class="feat-num">04</div><div class="feat-icon-wrap" style="background:rgba(248,113,113,.1)">👁️</div><h3>In-Browser Viewer</h3><p>Preview PDFs, images, videos and audio directly inside your vault.</p></div>
+            <div class="feat-cell"><div class="feat-num">05</div><div class="feat-icon-wrap" style="background:rgba(167,139,250,.1)">⚡</div><h3>Real-Time Alerts</h3><p>Instant WebSocket notifications when your files are accessed or shared with you.</p></div>
+            <div class="feat-cell"><div class="feat-num">06</div><div class="feat-icon-wrap" style="background:rgba(34,211,238,.08)">🌐</div><h3>Microservices Powered</h3><p>Auth, file management, notifications — each on its own service with Eureka discovery.</p></div>
+        </div>
+    </div>
+</section>
+
+<section class="how">
+    <div class="how-inner">
+        <div class="section-label reveal">How It Works</div>
+        <div class="section-title reveal reveal-delay-1">Simple by design.</div>
+        <div class="section-sub reveal reveal-delay-2">Four steps from signup to secure storage.</div>
+        <div class="steps">
+            <div class="step reveal reveal-delay-1"><div class="step-num">1</div><h4>Create Account</h4><p>Sign up in seconds. Your vault is created instantly with full JWT session protection.</p></div>
+            <div class="step reveal reveal-delay-2"><div class="step-num">2</div><h4>Upload Files</h4><p>Drop any file — it's stored instantly and ready to access or share.</p></div>
+            <div class="step reveal reveal-delay-3"><div class="step-num">3</div><h4>View or Download</h4><p>Preview files in-browser or download them anytime, from anywhere.</p></div>
+            <div class="step reveal reveal-delay-4"><div class="step-num">4</div><h4>Share Securely</h4><p>Share files with other users. Manage access and revoke at any time.</p></div>
+        </div>
+    </div>
+</section>
+
+<section class="cta">
+    <div class="cta-glow"></div>
+    <div class="cta-inner">
+        <h2>Ready to own<br/>your storage?</h2>
+        <p>Create your free vault in seconds. No card needed.</p>
+        <div class="cta-btns">
+            <a href="/register" class="btn btn-solid btn-lg"><i class="bi bi-shield-lock-fill"></i> Create Free Vault</a>
+            <a href="/login" class="btn btn-outline-lg"><i class="bi bi-box-arrow-in-right"></i> Sign In</a>
+        </div>
+    </div>
+</section>
+
+<footer>
+    <div class="footer-brand">🗂️ Vault<span>Hub</span></div>
+    <p>Your files, your vault, your rules.</p>
+</footer>
+
+<script>
+// ── BACKGROUND CANVAS: Floating grid + moving orbs ──
+const canvas = document.getElementById('bg-canvas');
+const ctx = canvas.getContext('2d');
+let W, H;
+
+function resize() { W = canvas.width = window.innerWidth; H = canvas.height = window.innerHeight; }
+resize();
+window.addEventListener('resize', resize);
+
+// Grid lines
+function drawGrid() {
+    ctx.strokeStyle = 'rgba(79,110,247,0.03)';
+    ctx.lineWidth = 1;
+    const spacing = 60;
+    for (let x = 0; x < W; x += spacing) {
+        ctx.beginPath(); ctx.moveTo(x, 0); ctx.lineTo(x, H); ctx.stroke();
+    }
+    for (let y = 0; y < H; y += spacing) {
+        ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(W, y); ctx.stroke();
+    }
+}
+
+// Orbs
+const orbs = [
+    { x: W * 0.25, y: H * 0.35, r: 280, color: '79,110,247', speed: 0.0003, phase: 0 },
+    { x: W * 0.7,  y: H * 0.6,  r: 200, color: '0,212,170',  speed: 0.0004, phase: 2 },
+    { x: W * 0.5,  y: H * 0.2,  r: 160, color: '123,147,255', speed: 0.0002, phase: 4 },
+];
+
+let t = 0;
+function loop() {
+    ctx.clearRect(0, 0, W, H);
+    drawGrid();
+    t += 0.01;
+
+    orbs.forEach(o => {
+        const px = o.x + Math.sin(t * o.speed * 1000 + o.phase) * 60;
+        const py = o.y + Math.cos(t * o.speed * 800 + o.phase) * 40;
+        const grad = ctx.createRadialGradient(px, py, 0, px, py, o.r);
+        grad.addColorStop(0, `rgba(${o.color},0.08)`);
+        grad.addColorStop(1, `rgba(${o.color},0)`);
+        ctx.beginPath();
+        ctx.arc(px, py, o.r, 0, Math.PI * 2);
+        ctx.fillStyle = grad;
+        ctx.fill();
+    });
+
+    requestAnimationFrame(loop);
+}
+loop();
+
+// ── RAIN DROPS from the title ──
+const rainContainer = document.getElementById('rainContainer');
+const RAIN_COUNT = 28;
+const rainColors = ['79,110,247', '0,212,170', '123,147,255', '0,212,170', '79,110,247'];
+
+function createRainDrop() {
+    const drop = document.createElement('span');
+    drop.className = 'rain-drop';
+    const x = Math.random() * 100;
+    const duration = 0.6 + Math.random() * 1.2;
+    const delay = Math.random() * 4;
+    const color = rainColors[Math.floor(Math.random() * rainColors.length)];
+    const height = 10 + Math.random() * 40;
+    drop.style.cssText = `
+        left:${x}%;
+        background: linear-gradient(180deg, rgba(${color},0) 0%, rgba(${color},0.8) 50%, rgba(${color},0.2) 100%);
+        animation-duration:${duration}s;
+        animation-delay:${delay}s;
+        height:${height}px;
+    `;
+    return drop;
+}
+
+// Start rain after letters land (1.2s + last letter delay 1.06s)
+setTimeout(() => {
+    for (let i = 0; i < RAIN_COUNT; i++) {
+        rainContainer.appendChild(createRainDrop());
+    }
+    // Continuously regenerate rain drops
+    setInterval(() => {
+        // Replace old drops
+        const drops = rainContainer.querySelectorAll('.rain-drop');
+        drops.forEach(d => {
+            const newX = Math.random() * 100;
+            d.style.left = newX + '%';
+        });
+    }, 3000);
+}, 1800);
+
+// ── TITLE PARTICLES: Small orbs floating up from the title ──
+const particleContainer = document.getElementById('titleParticles');
+const particleColors = ['rgba(79,110,247,0.9)', 'rgba(0,212,170,0.9)', 'rgba(123,147,255,0.7)', 'rgba(0,212,170,0.6)'];
+
+function spawnTitleParticle() {
+    const p = document.createElement('span');
+    p.className = 'title-particle';
+    const x = 5 + Math.random() * 90;
+    const duration = 1.5 + Math.random() * 2;
+    const size = 2 + Math.random() * 4;
+    const color = particleColors[Math.floor(Math.random() * particleColors.length)];
+    p.style.cssText = `
+        left:${x}%;
+        top:50%;
+        width:${size}px;
+        height:${size}px;
+        background:${color};
+        box-shadow:0 0 ${size * 3}px ${color};
+        animation-duration:${duration}s;
+        animation-delay:${Math.random() * 2}s;
+    `;
+    particleContainer.appendChild(p);
+    setTimeout(() => p.remove(), (duration + 2) * 1000);
+}
+
+// Spawn particles continuously
+setTimeout(() => {
+    setInterval(spawnTitleParticle, 200);
+}, 1400);
+
+// ── LETTER HOVER: each letter glows on hover, neighbours dim ──
+const letters = document.querySelectorAll('.brand-letters .letter');
+letters.forEach((letter, i) => {
+    letter.addEventListener('mouseenter', () => {
+        letters.forEach((l, j) => {
+            const dist = Math.abs(i - j);
+            if (dist === 0) {
+                l.style.transform = 'translateY(-4px) scale(1.15)';
+                l.style.transition = 'all 0.2s';
+            } else {
+                l.style.opacity = Math.max(0.3, 1 - dist * 0.2);
+                l.style.transform = `translateY(${dist * 1}px)`;
+                l.style.transition = 'all 0.2s';
+            }
+        });
+    });
+    letter.addEventListener('mouseleave', () => {
+        letters.forEach(l => {
+            l.style.opacity = '';
+            l.style.transform = '';
+        });
+    });
+});
+
+// ── PERIODIC FULL TITLE RE-ANIMATE: letters "rain" back down and pop back up ──
+function retriggerLetters() {
+    letters.forEach((letter, i) => {
+        letter.style.animation = 'none';
+        letter.offsetHeight; // reflow
+        letter.style.animation = '';
+        letter.style.animationName = 'letterDrop';
+        letter.style.animationDuration = '0.6s';
+        letter.style.animationDelay = `${i * 0.08}s`;
+        letter.style.animationFillMode = 'both';
+        letter.style.animationTimingFunction = 'cubic-bezier(.23,1.2,.32,1)';
+    });
+    // Also re-run scan line
+    const scan = document.querySelector('.scan-line');
+    scan.style.animation = 'none';
+    scan.offsetHeight;
+    scan.style.animation = 'scanPass 2s ease both';
+}
+
+// Re-animate title every 8 seconds
+setInterval(retriggerLetters, 8000);
+
+// ── REVEAL ON SCROLL ──
+const reveals = document.querySelectorAll('.reveal');
+const io = new IntersectionObserver(entries => entries.forEach(e => {
+    if (e.isIntersecting) e.target.classList.add('visible');
+}), { threshold: 0.15 });
+reveals.forEach(el => io.observe(el));
+</script>
+</body>
+</html>

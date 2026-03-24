@@ -1,0 +1,520 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8"/>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+    <title th:text="${file.fileName} + ' — VaultHub'">File Viewer</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet"/>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css" rel="stylesheet"/>
+    <style>
+        :root {
+            --bg:#0c0c14; --bg2:#11111c; --bg3:#16162a; --border:#1f1f35;
+            --accent:#6366f1; --accent2:#818cf8; --green:#34d399;
+            --text:#e2e2f0; --muted:#6b6b90;
+            --font:'Inter',sans-serif; --mono:'JetBrains Mono',monospace;
+        }
+        * { margin:0; padding:0; box-sizing:border-box; }
+        html, body { height:100%; font-family:var(--font); background:var(--bg); color:var(--text); }
+
+        /* TOPBAR */
+        .topbar {
+            background:var(--bg2); border-bottom:1px solid var(--border);
+            padding:0.65rem 1.2rem; display:flex; align-items:center;
+            justify-content:space-between; gap:1rem; flex-wrap:wrap;
+            position:sticky; top:0; z-index:100;
+        }
+        .tb-left { display:flex; align-items:center; gap:0.7rem; min-width:0; }
+        .back-btn {
+            background:var(--bg3); border:1px solid var(--border); color:var(--muted);
+            padding:0.32rem 0.75rem; border-radius:7px; font-size:0.78rem;
+            font-family:var(--font); text-decoration:none;
+            display:flex; align-items:center; gap:0.3rem; transition:all 0.2s; flex-shrink:0;
+        }
+        .back-btn:hover { color:var(--text); border-color:#2a2a48; }
+        .file-info { min-width:0; }
+        .file-name {
+            font-size:0.88rem; font-weight:700; color:#fff;
+            overflow:hidden; text-overflow:ellipsis; white-space:nowrap; max-width:40vw;
+        }
+        .file-meta { font-size:0.67rem; color:var(--muted); font-family:var(--mono); margin-top:1px; }
+        .tb-right { display:flex; align-items:center; gap:0.5rem; flex-shrink:0; }
+        .action-btn {
+            background:var(--bg3); border:1px solid var(--border); color:var(--muted);
+            padding:0.32rem 0.75rem; border-radius:7px; font-size:0.78rem;
+            font-family:var(--font); text-decoration:none;
+            display:flex; align-items:center; gap:0.3rem; transition:all 0.2s;
+        }
+        .action-btn:hover { color:var(--text); border-color:#2a2a48; }
+        .action-btn.dl:hover { color:var(--green); border-color:var(--green); }
+        .secure-badge {
+            display:flex; align-items:center; gap:0.3rem;
+            background:rgba(52,211,153,0.08); border:1px solid rgba(52,211,153,0.18);
+            color:var(--green); font-size:0.65rem; font-family:var(--mono);
+            padding:0.22rem 0.55rem; border-radius:5px; flex-shrink:0;
+        }
+        .sdot { width:5px; height:5px; border-radius:50%; background:var(--green); box-shadow:0 0 5px var(--green); animation:blink 2s infinite; }
+        @keyframes blink { 0%,100%{opacity:1} 50%{opacity:0.3} }
+
+        /* VIEWER AREA */
+        .viewer-wrap {
+            height: calc(100vh - 53px);
+            display:flex; flex-direction:column;
+            align-items:center; justify-content:center;
+            padding:1rem;
+        }
+
+        /* PDF */
+        .pdf-viewer {
+            width:100%; height:100%;
+            border:none; border-radius:10px;
+            background:#fff;
+        }
+
+        /* IMAGE */
+        .image-viewer {
+            max-width:100%; max-height:100%;
+            border-radius:10px;
+            box-shadow:0 8px 40px rgba(0,0,0,0.5);
+            object-fit:contain;
+        }
+        .image-wrap {
+            width:100%; height:100%;
+            display:flex; align-items:center; justify-content:center;
+            position:relative;
+        }
+        .img-controls {
+            position:absolute; bottom:1rem; left:50%; transform:translateX(-50%);
+            display:flex; gap:0.5rem; background:rgba(0,0,0,0.6);
+            backdrop-filter:blur(8px); border:1px solid var(--border);
+            border-radius:8px; padding:0.4rem 0.6rem;
+        }
+        .img-btn {
+            background:transparent; border:none; color:var(--text);
+            font-size:1rem; cursor:pointer; padding:0.2rem 0.4rem;
+            border-radius:5px; transition:background 0.15s;
+        }
+        .img-btn:hover { background:rgba(255,255,255,0.1); }
+
+        /* VIDEO */
+        .video-viewer {
+            max-width:100%; max-height:100%;
+            border-radius:10px;
+            box-shadow:0 8px 40px rgba(0,0,0,0.5);
+            background:#000;
+            outline:none;
+        }
+
+        /* AUDIO */
+        .audio-wrap {
+            display:flex; flex-direction:column;
+            align-items:center; gap:1.5rem; width:100%; max-width:480px;
+        }
+        .audio-art {
+            width:160px; height:160px; border-radius:20px;
+            background:linear-gradient(135deg,var(--bg3),var(--bg2));
+            border:1px solid var(--border);
+            display:flex; align-items:center; justify-content:center;
+            font-size:3.5rem;
+            box-shadow:0 8px 32px rgba(99,102,241,0.2);
+        }
+        .audio-title { font-size:1rem; font-weight:700; color:#fff; text-align:center; }
+        .audio-sub { font-size:0.75rem; color:var(--muted); font-family:var(--mono); text-align:center; margin-top:0.2rem; }
+        .audio-viewer {
+            width:100%;
+            accent-color:var(--accent);
+        }
+
+        /* TEXT */
+        .text-viewer {
+            width:100%; height:100%;
+            background:var(--bg2); border:1px solid var(--border);
+            border-radius:10px; padding:1.5rem;
+            font-family:var(--mono); font-size:0.82rem;
+            color:var(--text); overflow:auto; white-space:pre-wrap;
+            line-height:1.7;
+        }
+
+        /* UNSUPPORTED / DOWNLOAD */
+        .download-wrap {
+            text-align:center; display:flex; flex-direction:column;
+            align-items:center; gap:1rem;
+        }
+        .dl-icon {
+            width:72px; height:72px; background:var(--bg2);
+            border:1px solid var(--border); border-radius:18px;
+            display:flex; align-items:center; justify-content:center; font-size:2rem;
+        }
+        .dl-title { font-size:1rem; font-weight:700; color:#fff; }
+        .dl-sub { font-size:0.8rem; color:var(--muted); line-height:1.6; max-width:320px; }
+        .dl-btn {
+            background:var(--accent); color:#fff; border:none; border-radius:9px;
+            padding:0.65rem 1.5rem; font-size:0.88rem; font-weight:700;
+            font-family:var(--font); text-decoration:none;
+            display:inline-flex; align-items:center; gap:0.4rem;
+            box-shadow:0 2px 14px rgba(99,102,241,0.3); transition:all 0.2s;
+        }
+        .dl-btn:hover { background:#5254cc; color:#fff; transform:translateY(-1px); }
+
+        /* LOADING */
+        .loading {
+            display:flex; flex-direction:column; align-items:center; gap:0.8rem;
+        }
+        .spinner {
+            width:36px; height:36px; border:3px solid var(--border);
+            border-top-color:var(--accent); border-radius:50%;
+            animation:spin 0.8s linear infinite;
+        }
+        @keyframes spin { to { transform:rotate(360deg); } }
+        .loading p { font-size:0.8rem; color:var(--muted); }
+
+        /* RESPONSIVE */
+        @media (max-width:600px) {
+            .topbar { padding:0.55rem 0.9rem; }
+            .file-name { max-width:30vw; font-size:0.8rem; }
+            .secure-badge { display:none; }
+            .viewer-wrap { padding:0.5rem; }
+        }
+    </style>
+</head>
+<body>
+
+<!-- TOPBAR -->
+<div class="topbar">
+    <div class="tb-left">
+        <a href="/files" class="back-btn">
+            <i class="bi bi-arrow-left"></i>
+            <span class="d-none d-sm-inline">Back</span>
+        </a>
+        <div class="file-info">
+            <div class="file-name" th:text="${file.fileName}">document.pdf</div>
+            <div class="file-meta"
+                 th:text="${file.mimeType} + ' · ' + ${file.fileSizeFormatted}">
+                application/pdf · 1.2 MB
+            </div>
+        </div>
+    </div>
+    <div class="tb-right">
+
+        <a th:href="@{/files/download/{uuid}(uuid=${file.fileUuid})}"
+           class="action-btn dl">
+            <i class="bi bi-download"></i>
+            <span class="d-none d-sm-inline">Download</span>
+        </a>
+        <a href="/files" class="action-btn">
+            <i class="bi bi-x-lg"></i>
+        </a>
+    </div>
+</div>
+
+<!-- VIEWER AREA -->
+<div class="viewer-wrap" id="viewerWrap">
+
+    <!-- LOADING STATE (shown until file loads) -->
+    <div class="loading" id="loadingState">
+        <div class="spinner"></div>
+        <p>Loading file...</p>
+    </div>
+
+    <!-- PDF VIEWER — PDF.js canvas renderer (works with authenticated stream) -->
+    <div th:if="${viewerType == 'pdf'}"
+         id="pdfViewer"
+         style="display:none;width:100%;height:100%;overflow-y:auto;overflow-x:hidden">
+        <div id="pdfContainer"
+             style="display:flex;flex-direction:column;align-items:center;gap:8px;padding:8px 0;min-height:100%">
+        </div>
+        <!-- PDF controls bar -->
+        <div id="pdfControls"
+             style="position:fixed;bottom:1.2rem;left:50%;transform:translateX(-50%);
+                    display:none;align-items:center;gap:0.5rem;
+                    background:rgba(17,17,28,0.92);backdrop-filter:blur(12px);
+                    border:1px solid var(--border);border-radius:10px;padding:0.45rem 0.8rem;
+                    z-index:50;box-shadow:0 4px 24px rgba(0,0,0,0.4)">
+            <button onclick="pdfPrevPage()"
+                    style="background:transparent;border:1px solid var(--border);color:var(--muted);
+                           border-radius:6px;padding:0.3rem 0.6rem;cursor:pointer;font-size:0.8rem;transition:all 0.15s"
+                    onmouseover="this.style.color='var(--text)'" onmouseout="this.style.color='var(--muted)'">
+                <i class="bi bi-chevron-left"></i>
+            </button>
+            <span id="pdfPageInfo" style="font-size:0.75rem;font-family:var(--mono);color:var(--muted);min-width:70px;text-align:center">Page 1 / ?</span>
+            <button onclick="pdfNextPage()"
+                    style="background:transparent;border:1px solid var(--border);color:var(--muted);
+                           border-radius:6px;padding:0.3rem 0.6rem;cursor:pointer;font-size:0.8rem;transition:all 0.15s"
+                    onmouseover="this.style.color='var(--text)'" onmouseout="this.style.color='var(--muted)'">
+                <i class="bi bi-chevron-right"></i>
+            </button>
+            <div style="width:1px;height:16px;background:var(--border);margin:0 0.2rem"></div>
+            <button onclick="pdfZoomOut()"
+                    style="background:transparent;border:1px solid var(--border);color:var(--muted);
+                           border-radius:6px;padding:0.3rem 0.6rem;cursor:pointer;font-size:0.8rem;transition:all 0.15s"
+                    onmouseover="this.style.color='var(--text)'" onmouseout="this.style.color='var(--muted)'">
+                <i class="bi bi-zoom-out"></i>
+            </button>
+            <span id="pdfZoomInfo" style="font-size:0.75rem;font-family:var(--mono);color:var(--muted);min-width:40px;text-align:center">100%</span>
+            <button onclick="pdfZoomIn()"
+                    style="background:transparent;border:1px solid var(--border);color:var(--muted);
+                           border-radius:6px;padding:0.3rem 0.6rem;cursor:pointer;font-size:0.8rem;transition:all 0.15s"
+                    onmouseover="this.style.color='var(--text)'" onmouseout="this.style.color='var(--muted)'">
+                <i class="bi bi-zoom-in"></i>
+            </button>
+        </div>
+    </div>
+
+    <!-- IMAGE VIEWER -->
+    <div class="image-wrap" th:if="${viewerType == 'image'}" style="display:none" id="imageWrap">
+        <img th:src="${streamUrl}"
+             class="image-viewer"
+             id="imageViewer"
+             th:alt="${file.fileName}"
+             onload="onLoaded('imageWrap')"
+             style="transform-origin:center"/>
+        <div class="img-controls">
+            <button class="img-btn" onclick="zoomOut()" title="Zoom Out"><i class="bi bi-zoom-out"></i></button>
+            <button class="img-btn" onclick="zoomReset()" title="Reset"><i class="bi bi-aspect-ratio"></i></button>
+            <button class="img-btn" onclick="zoomIn()" title="Zoom In"><i class="bi bi-zoom-in"></i></button>
+            <button class="img-btn" onclick="rotateImg()" title="Rotate"><i class="bi bi-arrow-clockwise"></i></button>
+        </div>
+    </div>
+
+    <!-- VIDEO VIEWER -->
+    <video
+            th:if="${viewerType == 'video'}"
+            class="video-viewer"
+            id="videoViewer"
+            controls
+            style="display:none"
+            oncanplay="onLoaded('videoViewer')">
+        <source th:src="${streamUrl}" th:type="${file.mimeType}"/>
+        Your browser does not support video playback.
+    </video>
+
+    <!-- AUDIO VIEWER -->
+    <div class="audio-wrap" th:if="${viewerType == 'audio'}" style="display:none" id="audioWrap">
+        <div class="audio-art">🎵</div>
+        <div>
+            <div class="audio-title" th:text="${file.fileName}">audio.mp3</div>
+            <div class="audio-sub" th:text="${file.fileSizeFormatted}">3.2 MB</div>
+        </div>
+        <audio class="audio-viewer" controls oncanplay="onLoaded('audioWrap')">
+            <source th:src="${streamUrl}" th:type="${file.mimeType}"/>
+        </audio>
+    </div>
+
+    <!-- TEXT VIEWER -->
+    <div class="text-viewer"
+         th:if="${viewerType == 'text'}"
+         id="textViewer"
+         style="display:none">
+        Loading text...
+    </div>
+
+    <!-- UNSUPPORTED — DOWNLOAD -->
+    <div class="download-wrap"
+         th:if="${viewerType == 'download'}"
+         id="downloadWrap">
+        <div class="dl-icon">📦</div>
+        <div class="dl-title" th:text="${file.fileName}">file.zip</div>
+        <div class="dl-sub">
+            This file type cannot be previewed in the browser.<br/>
+            Download it to open with the appropriate application.
+        </div>
+        <a th:href="@{/files/download/{uuid}(uuid=${file.fileUuid})}" class="dl-btn">
+            <i class="bi bi-download"></i> Download File
+        </a>
+    </div>
+
+</div>
+
+<script th:inline="javascript">
+    const viewerType = /*[[${viewerType}]]*/ 'download';
+    const streamUrl  = /*[[${streamUrl}]]*/ '';
+
+    // 🧠 Hide loading, show the actual viewer
+    function onLoaded(elementId) {
+        document.getElementById('loadingState').style.display = 'none';
+        document.getElementById(elementId).style.display =
+            (elementId === 'audioWrap' || elementId === 'imageWrap') ? 'flex' : 'block';
+    }
+
+    // 🧠 For download/unsupported — hide loading immediately
+    if (viewerType === 'download') {
+        document.getElementById('loadingState').style.display = 'none';
+        document.getElementById('downloadWrap').style.display = 'flex';
+    }
+
+    // 🧠 Load text files via fetch
+    if (viewerType === 'text') {
+        fetch(streamUrl)
+            .then(r => r.text())
+            .then(text => {
+                document.getElementById('loadingState').style.display = 'none';
+                const el = document.getElementById('textViewer');
+                el.textContent = text;
+                el.style.display = 'block';
+            })
+            .catch(() => {
+                document.getElementById('loadingState').style.display = 'none';
+                document.getElementById('textViewer').textContent =
+                    'Could not load text file.';
+                document.getElementById('textViewer').style.display = 'block';
+            });
+    }
+
+    // ── IMAGE ZOOM & ROTATE ──
+    let scale = 1, rotation = 0;
+
+    function zoomIn() {
+        scale = Math.min(scale + 0.25, 4);
+        applyTransform();
+    }
+    function zoomOut() {
+        scale = Math.max(scale - 0.25, 0.25);
+        applyTransform();
+    }
+    function zoomReset() {
+        scale = 1; rotation = 0;
+        applyTransform();
+    }
+    function rotateImg() {
+        rotation = (rotation + 90) % 360;
+        applyTransform();
+    }
+    function applyTransform() {
+        const img = document.getElementById('imageViewer');
+        if (img) img.style.transform =
+            `scale(${scale}) rotate(${rotation}deg)`;
+    }
+
+    // 🧠 Mouse wheel zoom for images
+    document.addEventListener('wheel', (e) => {
+        if (viewerType === 'image') {
+            e.preventDefault();
+            e.deltaY < 0 ? zoomIn() : zoomOut();
+        }
+    }, { passive: false });
+
+    // ══════════════════════════════════════════════════════════════
+    //  PDF.js VIEWER
+    //  Uses canvas rendering — works with session-authenticated stream
+    //  iframes fail because the browser blocks cross-port PDF embeds
+    // ══════════════════════════════════════════════════════════════
+    let pdfDoc = null;
+    let pdfScale = 1.2;
+    let pdfCurrentPage = 1;
+    let pdfTotalPages = 0;
+    let pdfRenderTask = null;
+
+    if (viewerType === 'pdf') {
+        // Load PDF.js from CDN
+        const script = document.createElement('script');
+        script.src = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js';
+        script.onload = function() {
+            pdfjsLib.GlobalWorkerOptions.workerSrc =
+                'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+            loadPdf();
+        };
+        document.head.appendChild(script);
+    }
+
+    async function loadPdf() {
+        try {
+            const loadingTask = pdfjsLib.getDocument({ url: streamUrl, withCredentials: true });
+            pdfDoc = await loadingTask.promise;
+            pdfTotalPages = pdfDoc.numPages;
+
+            // Show the viewer
+            document.getElementById('loadingState').style.display = 'none';
+            document.getElementById('pdfViewer').style.display = 'block';
+            document.getElementById('pdfControls').style.display = 'flex';
+
+            // Render all pages
+            for (let i = 1; i <= pdfTotalPages; i++) {
+                await renderPage(i);
+            }
+            updatePdfUI();
+        } catch (err) {
+            document.getElementById('loadingState').innerHTML =
+                '<div style="text-align:center"><div style="font-size:2rem;margin-bottom:0.5rem">⚠️</div>' +
+                '<p style="color:var(--red);font-size:0.82rem">Could not load PDF</p>' +
+                '<p style="color:var(--muted);font-size:0.75rem;margin-top:0.3rem">' + err.message + '</p></div>';
+        }
+    }
+
+    async function renderPage(pageNum) {
+        const page = await pdfDoc.getPage(pageNum);
+        const viewport = page.getViewport({ scale: pdfScale });
+
+        const canvas = document.createElement('canvas');
+        canvas.id = 'pdfPage_' + pageNum;
+        canvas.width = viewport.width;
+        canvas.height = viewport.height;
+        canvas.style.cssText = 'border-radius:6px;box-shadow:0 4px 24px rgba(0,0,0,0.5);max-width:100%;background:#fff';
+
+        document.getElementById('pdfContainer').appendChild(canvas);
+
+        const ctx = canvas.getContext('2d');
+        await page.render({ canvasContext: ctx, viewport }).promise;
+    }
+
+    async function reRenderAllPages() {
+        const container = document.getElementById('pdfContainer');
+        container.innerHTML = '';
+        for (let i = 1; i <= pdfTotalPages; i++) {
+            await renderPage(i);
+        }
+    }
+
+    function pdfPrevPage() {
+        if (pdfCurrentPage > 1) {
+            pdfCurrentPage--;
+            const el = document.getElementById('pdfPage_' + pdfCurrentPage);
+            if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+            updatePdfUI();
+        }
+    }
+
+    function pdfNextPage() {
+        if (pdfCurrentPage < pdfTotalPages) {
+            pdfCurrentPage++;
+            const el = document.getElementById('pdfPage_' + pdfCurrentPage);
+            if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+            updatePdfUI();
+        }
+    }
+
+    function pdfZoomIn() {
+        pdfScale = Math.min(pdfScale + 0.25, 3.0);
+        reRenderAllPages();
+        updatePdfUI();
+    }
+
+    function pdfZoomOut() {
+        pdfScale = Math.max(pdfScale - 0.25, 0.5);
+        reRenderAllPages();
+        updatePdfUI();
+    }
+
+    function updatePdfUI() {
+        document.getElementById('pdfPageInfo').textContent = 'Page ' + pdfCurrentPage + ' / ' + pdfTotalPages;
+        document.getElementById('pdfZoomInfo').textContent = Math.round(pdfScale * 100) + '%';
+    }
+
+    // Track current page while scrolling
+    if (viewerType === 'pdf') {
+        document.addEventListener('scroll', function() {
+            for (let i = 1; i <= pdfTotalPages; i++) {
+                const el = document.getElementById('pdfPage_' + i);
+                if (el) {
+                    const rect = el.getBoundingClientRect();
+                    if (rect.top >= 0 && rect.top < window.innerHeight / 2) {
+                        pdfCurrentPage = i;
+                        updatePdfUI();
+                        break;
+                    }
+                }
+            }
+        }, { passive: true });
+    }
+</script>
+
+</body>
+</html>
